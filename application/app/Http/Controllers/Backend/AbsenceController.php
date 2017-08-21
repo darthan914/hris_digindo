@@ -102,7 +102,7 @@ class AbsenceController extends Controller
         if ($request->hasFile('excel'))
         {
             $data = Excel::load($request->file('excel')->getRealPath() , function($reader) {})->get();
-            // return $data;
+            return $data;
         }
 
         if(!empty($data))
