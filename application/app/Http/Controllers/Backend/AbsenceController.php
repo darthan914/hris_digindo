@@ -482,51 +482,680 @@ class OvertimeData extends AbsenceData
         return $this->check_leader == 1 ? true : false;
     }
 }
+
+// Old   
+// class AbsenceController extends Controller
+// {
+//     public function __construct()
+//     {
+//         $this->middleware('auth');
+//     }
+
+//     function sumOvertime(OvertimePoint $overtimePoint)
+//     {
+//         $sumOvertime = 0;
+
+//         if ($overtimePoint->book_overtime) {
+//             if ($overtimePoint->time_overtime) {
+//                 $lowOvertime = min(strtotime($overtimePoint->time_out), strtotime($overtimePoint->time_overtime));
+
+//                 $totalOvertime = $lowOvertime - strtotime($overtimePoint->schedule_out);
+//                 $clockOvertime = (int) (($totalOvertime / 60) / 15) / 4;
+//                 if ($overtimePoint->min_overtime < (int) ($totalOvertime / 60)) {
+//                     if ($clockOvertime > 4) {
+//                         $sumOvertime = 4 + (($clockOvertime - 4) * 1.5);
+//                     } else {
+//                         $sumOvertime = $clockOvertime;
+//                     }
+//                 }
+//             }
+//         } else {
+//             if (strtotime($overtimePoint->schedule_out) < strtotime($overtimePoint->time_out)) {
+//                 $totalOvertime = strtotime($overtimePoint->time_out) - strtotime($overtimePoint->schedule_out);
+//                 if ($overtimePoint->status == 'kosong') {
+//                     $totalOvertime = strtotime($overtimePoint->time_out) - strtotime($overtimePoint->time_in);
+//                 }
+//                 $clockOvertime = (int) (($totalOvertime / 60) / 15) / 4;
+
+//                 if ($overtimePoint->min_overtime < $clockOvertime) {
+//                     if ($clockOvertime > 4) {
+//                         $sumOvertime = 4 * $overtimePoint->gaji + (($clockOvertime - 4) * (1.5 + $overtimePoint->gaji));
+//                     } else {
+//                         $sumOvertime = $clockOvertime;
+//                     }
+//                 }
+//             }
+//         }
+
+//         return $sumOvertime;
+//     }
+
+//     public function index(Request $request)
+//     {
+//         $index = Absence::all();
+
+//         return view('backend.absence.index')->with(compact('index'));
+//     }
+
+//     public function employee($id, Request $request)
+//     {
+//         $index   = AbsenceEmployee::where('id_absence', $id)->get();
+//         $absence = Absence::find($id);
+
+//         return view('backend.absence.employee')->with(compact('index', 'absence'));
+//     }
+
+//     public function employeeDetail($id, Request $request)
+//     {
+//         $index = AbsenceEmployeeDetail::where('id_absence_employee', $id)->get();
+
+//         $absenceEmployee = AbsenceEmployee::find($id);
+
+//         $absenceEmployeeDetail = AbsenceEmployeeDetail::where('id_absence_employee', $id)->get();
+
+//         $masuk   = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', 'masuk')->count();
+//         $libur   = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', 'libur')->count();
+//         $sakit   = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', 'sakit')->count();
+//         $izin    = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', 'izin')->count();
+//         $cuti    = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', 'cuti')->count();
+//         $alpa    = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', 'alpa')->count();
+//         $present = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', '<>', 'kosong')->count();
+//         $gaji    = AbsenceEmployeeDetail::where('id_absence_employee', $id)->sum('gaji');
+//         $lembur  = AbsenceEmployeeDetail::where('id_absence_employee', $id)->sum('point_overtime');
+//         $telat   = AbsenceEmployeeDetail::where('id_absence_employee', $id)->sum('total_late');
+
+//         return view('backend.absence.employeeDetail')->with(compact(
+//             'index',
+//             'absenceEmployee',
+//             'absenceEmployeeDetail',
+//             'masuk',
+//             'libur',
+//             'sakit',
+//             'izin',
+//             'cuti',
+//             'alpa',
+//             'present',
+//             'gaji',
+//             'lembur',
+//             'telat',
+//             'id'
+//         ));
+//     }
+
+//     public function create(Request $request)
+//     {
+//         $jobTitle = JobTitle::all();
+//         $employee = Employee::all();
+
+//         return view('backend.absence.create')->with(compact('jobTitle', 'employee'));
+//     }
+
+//     public function store(Request $request)
+//     {
+//         // return $request->all();
+
+//         $this->validate($request, [
+//             'name' => 'required',
+//             'date' => 'required',
+//         ]);
+
+//         $periode = explode(' - ', $request->date);
+
+//         $start_periode = $periode[0];
+//         $end_periode   = $periode[1];
+
+//         // get data from excel
+//         $data = '';
+//         if ($request->hasFile('excel')) {
+//             $data = Excel::load($request->file('excel')->getRealPath(), function ($reader) {})->get();
+//             // return $data;
+//         }
+
+//         // DB::beginTransaction();
+
+//         if (!empty($data)) {
+//             $absence = new Absence;
+
+//             $absence->name       = $request->name;
+//             $absence->date_start = date('Y-m-d', strtotime($start_periode));
+//             $absence->date_end   = date('Y-m-d', strtotime($end_periode));
+
+//             $absence->save();
+
+//             // grouping by sorted no._id and insert into AbsenceEmployee
+//             $return       = '';
+//             $init_machine = 0;
+//             foreach ($data as $list) {
+
+//                 if ($init_machine != $list['no._id']) {
+//                     $init_machine = $list['no._id'];
+//                     $insert[]     = ['id_absence' => $absence->id, 'id_machine' => (int) $init_machine];
+//                 }
+//             }
+
+//             // insert into AbsenceEmployeeDetail
+//             if (!empty($insert)) {
+//                 AbsenceEmployee::insert($insert);
+
+//                 $absenceEmployee = AbsenceEmployee::where('id_absence', $absence->id)->get();
+//                 $overtimePoint = new OvertimePoint;
+
+//                 foreach ($absenceEmployee as $list) {
+
+//                     if (!empty($list->employee)) {
+
+//                         $start = $list->absence->date_start;
+
+//                         while ($start <= $list->absence->date_end) {
+//                             $date[] = $start;
+//                             $start  = date('Y-m-d', strtotime($start . ' +1 day'));
+//                         }
+
+//                         $holiday = Holiday::whereIn('date', $date)->get();
+
+//                         $shift_detail = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
+//                             ->join('attendance', 'attendance.id_job_title', '=', 'job_title.id')
+//                             ->join('shift_detail', 'shift_detail.id_shift', '=', 'attendance.id_shift')
+//                             ->where('employee.id', $list->employee->id)
+//                             ->select('day', 'shift_in', 'shift_out')
+//                             ->get();
+
+//                         $shift = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
+//                             ->join('attendance', 'attendance.id_job_title', '=', 'job_title.id')
+//                             ->join('shift', 'shift.id', '=', 'attendance.id_shift')
+//                             ->where('employee.id', $list->employee->id)
+//                             ->select('late')
+//                             ->first();
+
+//                         $overtime = Overtime::where('id_employee', $list->employee->id)->get();
+
+//                         $jobOvertime = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
+//                             ->where('employee.id', $list->employee->id)
+//                             ->select('book_overtime', 'min_overtime')
+//                             ->first();
+
+//                         $dayoff  = Dayoff::whereIn('start_dayoff', $date)->where('id_employee', $list->employee->id)->get();
+
+//                         foreach ($data as $list2) {
+//                             $date_explode = explode('/', $list2['tanggal']);
+
+//                             $format_date  = $date_explode[0];
+//                             $format_month = $date_explode[1];
+//                             $format_year  = $date_explode[2];
+
+//                             $format_date_php = $format_year . '-' . $format_month . '-' . $format_date;
+
+//                             $day = $shift_in = $shift_out = null;
+//                             foreach ($shift_detail as $list3) {
+//                                 if (date('w', strtotime($format_date_php)) == $list3->day) {
+//                                     $day       = $list3->day;
+//                                     $shift_in  = $list3->shift_in;
+//                                     $shift_out = $list3->shift_out;
+//                                     break;
+//                                 }
+//                             }
+
+//                             $holidayName = $holidayDate = null;
+//                             foreach ($holiday as $list3) {
+//                                 if ($format_date_php == $list3->date) {
+//                                     $holidayName = $list3->name;
+//                                     $holidayDate = $list3->date;
+//                                     break;
+//                                 }
+//                             }
+
+//                             $time_in  = $time_out  = null;
+//                             $time_in  = $list2['scan_masuk'];
+//                             $time_out = $list2['scan_pulang'];
+
+//                             $dayoffStart = $dayoffEnd = $dayoffNote = $dayoffType = '';
+//                             foreach ($dayoff as $list3) {
+//                                 if ($list3->start_dayoff <= $format_date_php && $format_date_php <= $list3->end_dayoff) {
+//                                     $dayoffStart = $list3->start_dayoff;
+//                                     $dayoffEnd   = $list3->end_dayoff;
+//                                     $dayoffNote  = $list3->note;
+//                                     $dayoffType  = $list3->type;
+//                                     break;
+//                                 }
+//                             }
+
+//                             $status = $status_note = $gaji = null;
+//                             if ($day && $time_in && $time_out) {
+//                                 $status = 'masuk';
+//                                 $gaji   = 1;
+//                                 if ($holidayDate) {
+//                                     $status      = 'libur';
+//                                     $status_note = $holidayName;
+//                                     $gaji        = 1.5;
+//                                 }
+//                             } else if (!$day && $time_in && $time_out) {
+//                                 $status = 'masuk';
+//                                 $gaji   = 1.5;
+//                             } else {
+//                                 if ($holidayDate) {
+//                                     $status      = 'libur';
+//                                     $status_note = $holidayName;
+//                                     if ($day) {
+//                                         $gaji = 1;
+//                                     }
+//                                 } else if ($dayoffStart <= $format_date_php && $format_date_php <= $dayoffEnd) {
+//                                     $status      = $dayoffType;
+//                                     $status_note = $dayoffNote;
+//                                     $gaji        = 1;
+//                                 } else {
+//                                     if (!$day) {
+//                                         $status = 'kosong';
+//                                         $gaji   = 0;
+//                                     } else {
+//                                         $status = 'alpa';
+//                                         $gaji   = -1;
+//                                     }
+//                                 }
+//                             }
+
+//                             $totalOvertime = $overtimeDate = $overtimeEnd = 0;
+//                             foreach ($overtime as $list3) {
+//                                 if ($format_date_php == $list3->date) {
+//                                     $overtimeDate = $list3->date;
+//                                     $overtimeEnd  = $list3->end_overtime;
+//                                     break;
+//                                 }
+//                             }
+
+//                             $overtimePoint->book_overtime = $jobOvertime->book_overtime;
+//                             $overtimePoint->min_overtime = $jobOvertime->min_overtime;
+//                             $overtimePoint->time_overtime = $overtimeEnd;
+//                             $overtimePoint->time_in = $format_date_php . ' ' . $time_in;
+//                             $overtimePoint->time_out = $format_date_php . ' ' . $time_out;
+//                             $overtimePoint->schedule_out = $format_date_php . ' ' . $shift_out;
+//                             $overtimePoint->status = $status;
+//                             $overtimePoint->gaji = $gaji;
+
+//                             $totalLate = $fine_late = 0;
+//                             if ($day && $format_date_php . ' ' . $shift_in < $time_in) {
+//                                 $totalLate = strtotime($time_in) - strtotime($format_date_php . ' ' . $shift_in);
+//                                 $totalLate = (int) (($totalLate / 60) / $shift->late);
+
+//                             }
+
+//                             if ($list->id_machine == $list2['no._id']) {
+//                                 $insert2[] = [
+//                                     'id_absence_employee' => $list->id,
+//                                     'schedule_in'         => $shift_in ? $format_date_php . ' ' . $shift_in : '',
+//                                     'schedule_out'        => $shift_out ? $format_date_php . ' ' . $shift_out : '',
+//                                     'time_in'             => $time_in ? $format_date_php . ' ' . $time_in : '',
+//                                     'time_out'            => $time_out ? $format_date_php . ' ' . $time_out : '',
+//                                     'status'              => $status,
+//                                     'status_note'         => $status_note,
+//                                     'gaji'                => $gaji,
+//                                     'gaji_pokok'          => $list->employee->gaji_pokok,
+//                                     'time_overtime'       => $overtimeEnd,
+//                                     'point_overtime'      => $this->sumOvertime($overtimePoint),
+//                                     'payment_overtime'    => $list->employee->uang_lembur,
+//                                     'total_late'          => $totalLate,
+//                                     'fine_late'           => $list->employee->uang_telat,
+//                                 ];
+//                             }
+//                         }
+//                     }
+//                 }
+
+//                 // DB::rollBack();
+//                 // return $insert2;
+
+//                 if (!empty($insert2)) {
+//                     AbsenceEmployeeDetail::insert($insert2);
+//                 }
+//             }
+//         }
+
+//         Session::flash('success', 'Data Has Been Added');
+//         return redirect()->route('admin.absence');
+//     }
+
+//     public function edit($id)
+//     {
+//         $index = Absence::find($id);
+
+//         return view('backend.absence.edit')->with(compact('index'));
+//     }
+
+//     public function update($id, Request $request)
+//     {
+//         $this->validate($request, [
+//             'name' => 'required',
+//             'date' => 'required',
+//         ]);
+
+//         $periode = explode(' - ', $request->date);
+
+//         $start_periode = $periode[0];
+//         $end_periode   = $periode[1];
+
+//         $index = Absence::find($id);
+
+//         $index->name       = $request->name;
+//         $index->date_start = date('Y-m-d', strtotime($start_periode));
+//         $index->date_end   = date('Y-m-d', strtotime($end_periode));
+
+//         $index->save();
+
+//         Session::flash('success', 'Data Has Been Updated');
+//         return redirect()->route('admin.absence');
+//     }
+
+//     public function delete($id, Request $request)
+//     {
+//         if (isset($request->type) && $request->type == 'absenceEmployee') {
+//             AbsenceEmployee::destroy($id);
+//         } else if (isset($request->type) && $request->type == 'absenceEmployeeDetail') {
+//             AbsenceEmployeeDetail::destroy($id);
+//         } else {
+//             Absence::destroy($id);
+//         }
+
+//         Session::flash('success', 'Data Has Been Deleted');
+//         return redirect()->route('admin.absence');
+//     }
+
+//     public function action(Request $request)
+//     {
+//         if (isset($request->id)) {
+//             if ($request->action == 'delete') {
+//                 if (isset($request->type) && $request->type == 'absenceEmployee') {
+//                     AbsenceEmployee::destroy($request->id);
+//                 } else if (isset($request->type) && $request->type == 'absenceEmployeeDetail') {
+//                     AbsenceEmployeeDetail::destroy($request->id);
+//                 } else {
+//                     Absence::destroy($request->id);
+//                 }
+
+//                 Session::flash('success', 'Data Selected Has Been Deleted');
+//             } else if ($request->action == 'enable') {
+//                 $index = Absence::whereIn('id', $request->id)->update(['active' => 1]);
+//                 Session::flash('success', 'Data Selected Has Been Actived');
+//             } else if ($request->action == 'disable') {
+//                 $index = Absence::whereIn('id', $request->id)->update(['active' => 0]);
+//                 Session::flash('success', 'Data Selected Has Been Inactived');
+//             }
+//         }
+
+//         return redirect()->route('admin.absence');
+//     }
+
+//     public function active($id, $action)
+//     {
+//         $index = Absence::find($id);
+
+//         $index->active = $action;
+
+//         $index->save();
+
+//         if ($action == 1) {
+//             Session::flash('success', 'Data Has Been Actived');
+//         } else {
+//             Session::flash('success', 'Data Has Been Inactived');
+//         }
+
+//         return redirect()->route('admin.absence');
+//     }
+
+//     public function getDataAbsenceEmployeeDetail(Request $request)
+//     {
+//         $absenceEmployee = AbsenceEmployee::find($request->id_absence_employee);
+
+//         $holiday = Holiday::where('date', date('Y-m-d', strtotime($request->date)))->first();
+
+//         $dayoff = Dayoff::where('start_dayoff', date('Y-m-d', strtotime($request->date)))->where('id_employee', $absenceEmployee->employee->id)->first();
+
+//         $shift_detail = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
+//             ->join('attendance', 'attendance.id_job_title', '=', 'job_title.id')
+//             ->join('shift_detail', 'shift_detail.id_shift', '=', 'attendance.id_shift')
+//             ->where('employee.id', $absenceEmployee->employee->id)
+//             ->where('day', date('w', strtotime($request->date)))
+//             ->select('day', 'shift_in', 'shift_out')
+//             ->first();
+
+//         $overtime = Overtime::where('id_employee', $absenceEmployee->employee->id)->whereDate('date', date('Y-m-d', strtotime($request->date)))->first();
+
+//         $status = $status_note = null;
+        
+//         if ($holiday) {
+//             $status      = 'libur';
+//             $status_note = $holiday->name;
+//         } else if ($dayoff && $dayoff->start_dayoff <= date('Y-m-d', strtotime($request->date)) && date('Y-m-d', strtotime($request->date)) <= $dayoff->end_dayoff) {
+//             $status      = 'cuti';
+//             $status_note = $dayoff->note;
+//         }
+        
+//         return compact('status', 'status_note', 'shift', 'overtime');
+//     }
+
+//     public function createAbsenceEmployeeDetail($id)
+//     {
+//         $absenceEmployee = AbsenceEmployee::find($id);
+//         return view('backend.absence.createEmployeeDetail')->with(compact('absenceEmployee'));
+//     }
+
+//     public function storeAbsenceEmployeeDetail($id, Request $request)
+//     {
+//         $absenceEmployee = AbsenceEmployee::find($id);
+
+//         $jobOvertime = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
+//             ->where('employee.id', $absenceEmployee->employee->id)
+//             ->select('book_overtime', 'min_overtime')
+//             ->first();
+
+//         $shift_detail = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
+//             ->join('attendance', 'attendance.id_job_title', '=', 'job_title.id')
+//             ->join('shift_detail', 'shift_detail.id_shift', '=', 'attendance.id_shift')
+//             ->where('employee.id', $absenceEmployee->employee->id)
+//             ->select('day', 'shift_in', 'shift_out')
+//             ->get();
+
+//         $shift = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
+//             ->join('attendance', 'attendance.id_job_title', '=', 'job_title.id')
+//             ->join('shift', 'shift.id', '=', 'attendance.id_shift')
+//             ->where('employee.id', $absenceEmployee->employee->id)
+//             ->select('late')
+//             ->first();
+
+//         $gaji = 0;
+        
+//         if ($request->status == 'masuk' && $request->time_in && $request->time_out) {
+//             $gaji = 1;
+//         }
+//         if ($request->status == 'kosong' && $request->time_in && $request->time_out) {
+//             $gaji = 1.5;
+//         }
+//         if ($request->status == 'libur' && $request->time_in && $request->time_out){
+//             $gaji = 1.5;
+//         }
+//         if(in_array($request->status, ['libur', 'izin', 'cuti', 'sakit']) && !$request->time_in && !$request->time_out)
+//         {
+//             $gaji = 1;
+//         }
+//         if($request->status == 'alpa')
+//         {
+//             $gaji = -1;
+//             $request->time_in = '00:00:00';
+//             $request->time_out = '00:00:00';
+//         }
+
+//         $schedule_in  = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->schedule_in));
+//         $schedule_out = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->schedule_out));
+//         $time_in      = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->time_in));
+//         $time_out     = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->time_out));
+
+//         $overtimePoint = new OvertimePoint;
+
+//         $overtimePoint->book_overtime = $jobOvertime->book_overtime;
+//         $overtimePoint->min_overtime  = $jobOvertime->min_overtime;
+//         $overtimePoint->time_overtime = $request->time_overtime;
+//         $overtimePoint->time_in       = $time_in;
+//         $overtimePoint->time_out      = $time_out;
+//         $overtimePoint->schedule_out  = $schedule_out;
+//         $overtimePoint->status        = $request->status;
+//         $overtimePoint->gaji          = $gaji;
+
+//         $totalLate = $fine_late = 0;
+//         if ($request->status != 'kosong' && $schedule_in < $time_in) {
+//             $totalLate = strtotime($time_in) - strtotime($schedule_in);
+//             $totalLate = (int) (($totalLate / 60) / $shift->late);
+//         }
+
+//         $this->validate($request, [
+//             'schedule_in' => 'required',
+//             'schedule_out' => 'required',
+//             'time_in' => 'required_unless:status,kosong',
+//             'time_out' => 'required_unless:status,kosong',
+//             'status_note' => 'required_unless:status,kosong,status,masuk',
+//             'gaji_pokok' => 'required|numeric',
+//             'time_overtime' => 'nullable|date',
+//             'fine_late' => 'required',
+//         ]);
+
+
+//         $index = new AbsenceEmployeeDetail;
     
+//         $index->id_absence_employee = $id;
+//         $index->schedule_in         = $schedule_in;
+//         $index->schedule_out        = $schedule_out;
+//         $index->time_in             = $time_in;
+//         $index->time_out            = $time_out;
+//         $index->status              = $request->status;
+//         $index->status_note         = $request->status_note;
+//         $index->gaji                = $request->gaji ?: $gaji;
+//         $index->gaji_pokok          = $request->gaji_pokok;
+//         $index->time_overtime       = date('Y-m-d H:i:s', strtotime($request->time_overtime));
+//         $index->point_overtime      = $request->point_overtime ?: $this->sumOvertime($overtimePoint);
+//         $index->payment_overtime    = $request->payment_overtime;
+//         $index->total_late          = $totalLate;
+//         $index->fine_late           = $request->fine_late;
+//         $index->fine_additional     = $request->fine_additional;
+
+//         $index->save();
+
+//         return redirect()->route('admin.absence.employeeDetail', ['id' => $id])->with('success', 'Data has been added.');
+//     }
+
+//     public function editAbsenceEmployeeDetail($id)
+//     {
+//         $index           = AbsenceEmployeeDetail::find($id);
+//         $absenceEmployee = AbsenceEmployee::find($index->id_absence_employee);
+//         return view('backend.absence.editEmployeeDetail')->with(compact('index', 'absenceEmployee'));
+//     }
+
+//     public function updateAbsenceEmployeeDetail($id, Request $request)
+//     {
+//         $absenceEmployee = AbsenceEmployee::find($id);
+
+//         $jobOvertime = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
+//             ->where('employee.id', $absenceEmployee->employee->id)
+//             ->select('book_overtime', 'min_overtime')
+//             ->first();
+
+//         $shift_detail = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
+//             ->join('attendance', 'attendance.id_job_title', '=', 'job_title.id')
+//             ->join('shift_detail', 'shift_detail.id_shift', '=', 'attendance.id_shift')
+//             ->where('employee.id', $absenceEmployee->employee->id)
+//             ->select('day', 'shift_in', 'shift_out')
+//             ->get();
+
+
+//         $shift = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
+//             ->join('attendance', 'attendance.id_job_title', '=', 'job_title.id')
+//             ->join('shift', 'shift.id', '=', 'attendance.id_shift')
+//             ->where('employee.id', $absenceEmployee->employee->id)
+//             ->select('late')
+//             ->first();
+
+//         $gaji = 0;
+        
+//         if ($request->status == 'masuk' && $request->time_in && $request->time_out) {
+//             $gaji = 1;
+//         }
+//         if ($request->status == 'kosong' && $request->time_in && $request->time_out) {
+//             $gaji = 1.5;
+//         }
+//         if ($request->status == 'libur' && $request->time_in && $request->time_out){
+//             $gaji = 1.5;
+//         }
+//         if(in_array($request->status, ['libur', 'izin', 'cuti', 'sakit']) && !$request->time_in && !$request->time_out)
+//         {
+//             $gaji = 1;
+//         }
+//         if($request->status == 'alpa')
+//         {
+//             $gaji = -1;
+//             $request->time_in = '00:00:00';
+//             $request->time_out = '00:00:00';
+//         }
+
+//         $schedule_in  = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->schedule_in));
+//         $schedule_out = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->schedule_out));
+//         $time_in      = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->time_in));
+//         $time_out     = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->time_out));
+
+//         $overtimePoint = new OvertimePoint;
+
+//         $overtimePoint->book_overtime = $jobOvertime->book_overtime;
+//         $overtimePoint->min_overtime  = $jobOvertime->min_overtime;
+//         $overtimePoint->time_overtime = $request->time_overtime;
+//         $overtimePoint->time_in       = $time_in;
+//         $overtimePoint->time_out      = $time_out;
+//         $overtimePoint->schedule_out  = $schedule_out;
+//         $overtimePoint->status        = $request->status;
+//         $overtimePoint->gaji          = $gaji;
+
+//         $totalLate = $fine_late = 0;
+//         if ($request->status != 'kosong' && $schedule_in < $time_in) {
+//             $totalLate = strtotime($time_in) - strtotime($schedule_in);
+//             $totalLate = (int) (($totalLate / 60) / $shift->late);
+//         }
+
+//         $this->validate($request, [
+//             'schedule_in' => 'required',
+//             'schedule_out' => 'required',
+//             'time_in' => 'required_unless:status,kosong',
+//             'time_out' => 'required_unless:status,kosong',
+//             'status_note' => 'required_unless:status,kosong,status,masuk',
+//             'gaji_pokok' => 'required|numeric',
+//             'time_overtime' => 'nullable|date',
+//             'fine_late' => 'required',
+//         ]);
+
+
+//         $index = AbsenceEmployeeDetail::find($request->id);
+    
+//         $index->schedule_in         = $schedule_in;
+//         $index->schedule_out        = $schedule_out;
+//         $index->time_in             = $time_in;
+//         $index->time_out            = $time_out;
+//         $index->status              = $request->status;
+//         $index->status_note         = $request->status_note;
+//         $index->gaji                = $request->gaji ?: $gaji;
+//         $index->gaji_pokok          = $request->gaji_pokok;
+//         $index->time_overtime       = date('Y-m-d H:i:s', strtotime($request->time_overtime));
+//         $index->point_overtime      = $request->point_overtime ?: $this->sumOvertime($overtimePoint);
+//         $index->payment_overtime    = $request->payment_overtime;
+//         $index->total_late          = $totalLate;
+//         $index->fine_late           = $request->fine_late;
+//         $index->fine_additional     = $request->fine_additional;
+
+
+//         $index->save();
+
+//         return redirect()->route('admin.absence.employeeDetail', ['id' => $id])->with('success', 'Data has been added.');
+//     }
+// }
+
+// New    
 class AbsenceController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
-    }
-
-    function sumOvertime(OvertimePoint $overtimePoint)
-    {
-        $sumOvertime = 0;
-
-        if ($overtimePoint->book_overtime) {
-            if ($overtimePoint->time_overtime) {
-                $lowOvertime = min(strtotime($overtimePoint->time_out), strtotime($overtimePoint->time_overtime));
-
-                $totalOvertime = $lowOvertime - strtotime($overtimePoint->schedule_out);
-                $clockOvertime = (int) (($totalOvertime / 60) / 15) / 4;
-                if ($overtimePoint->min_overtime < (int) ($totalOvertime / 60)) {
-                    if ($clockOvertime > 4) {
-                        $sumOvertime = 4 + (($clockOvertime - 4) * 1.5);
-                    } else {
-                        $sumOvertime = $clockOvertime;
-                    }
-                }
-            }
-        } else {
-            if (strtotime($overtimePoint->schedule_out) < strtotime($overtimePoint->time_out)) {
-                $totalOvertime = strtotime($overtimePoint->time_out) - strtotime($overtimePoint->schedule_out);
-                if ($overtimePoint->status == 'kosong') {
-                    $totalOvertime = strtotime($overtimePoint->time_out) - strtotime($overtimePoint->time_in);
-                }
-                $clockOvertime = (int) (($totalOvertime / 60) / 15) / 4;
-
-                if ($overtimePoint->min_overtime < $clockOvertime) {
-                    if ($clockOvertime > 4) {
-                        $sumOvertime = 4 * $overtimePoint->gaji + (($clockOvertime - 4) * (1.5 + $overtimePoint->gaji));
-                    } else {
-                        $sumOvertime = $clockOvertime;
-                    }
-                }
-            }
-        }
-
-        return $sumOvertime;
     }
 
     public function index(Request $request)
@@ -637,7 +1266,6 @@ class AbsenceController extends Controller
                 AbsenceEmployee::insert($insert);
 
                 $absenceEmployee = AbsenceEmployee::where('id_absence', $absence->id)->get();
-                $overtimePoint = new OvertimePoint;
 
                 $holiday    = new HolidayData;
                 $schedule   = new ScheduleData;
@@ -1002,6 +1630,4 @@ class AbsenceController extends Controller
 
         return redirect()->route('admin.absence.employeeDetail', ['id' => $id])->with('success', 'Data has been added.');
     }
-
-
 }
