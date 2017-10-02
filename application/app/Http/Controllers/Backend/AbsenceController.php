@@ -321,7 +321,7 @@ class AbsenceController extends Controller
             // return $data;
         }
 
-        DB::beginTransaction();
+        // DB::beginTransaction();
 
         if (!empty($data)) {
             $absence = new Absence;
@@ -425,8 +425,8 @@ class AbsenceController extends Controller
                     }
                 }
 
-                DB::rollBack();
-                return $insert2;
+                // DB::rollBack();
+                // return $insert2;
 
                 if (!empty($insert2)) {
                     AbsenceEmployeeDetail::insert($insert2);
