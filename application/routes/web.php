@@ -126,6 +126,11 @@ Route::get('/absence/{id}/delete', 'Backend\AbsenceController@delete')->name('ad
 Route::post('/absence/action', 'Backend\AbsenceController@action')->name('admin.absence.action');
 Route::get('/absence/{id}/employee', 'Backend\AbsenceController@employee')->name('admin.absence.employee');
 Route::get('/absence/{id}/employeeDetail', 'Backend\AbsenceController@employeeDetail')->name('admin.absence.employeeDetail');
+Route::get('/absence/getDataAbsenceEmployeeDetail', 'Backend\AbsenceController@getDataAbsenceEmployeeDetail')->name('admin.absence.getDataAbsenceEmployeeDetail');
+Route::get('/absence/{id}/createAbsenceEmployeeDetail', 'Backend\AbsenceController@createAbsenceEmployeeDetail')->name('admin.absence.createAbsenceEmployeeDetail');
+Route::post('/absence/{id}/storeAbsenceEmployeeDetail', 'Backend\AbsenceController@storeAbsenceEmployeeDetail')->name('admin.absence.storeAbsenceEmployeeDetail');
+Route::get('/absence/{id}/editAbsenceEmployeeDetail', 'Backend\AbsenceController@editAbsenceEmployeeDetail')->name('admin.absence.editAbsenceEmployeeDetail');
+Route::post('/absence/{id}/updateAbsenceEmployeeDetail', 'Backend\AbsenceController@updateAbsenceEmployeeDetail')->name('admin.absence.updateAbsenceEmployeeDetail');
 
 Route::get('/overtime', 'Backend\OvertimeController@index')->name('admin.overtime');
 Route::get('/overtime/create', 'Backend\OvertimeController@create')->name('admin.overtime.create');

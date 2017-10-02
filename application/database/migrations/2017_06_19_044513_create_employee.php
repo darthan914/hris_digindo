@@ -27,7 +27,7 @@ class CreateEmployee extends Migration
             $table->integer('id_job_title');
             $table->string('division')->nullable();
             $table->string('sub_division')->nullable();
-            $table->date('join_date');
+            $table->date('date_join');
             $table->text('phone');
             $table->text('guarantee')->nullable();
             $table->text('ref')->nullable();
