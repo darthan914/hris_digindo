@@ -39,6 +39,7 @@ class JobTitleController extends Controller
     	$this->validate($request, [
             'name' => 'required',
             'code' => 'required|unique:job_title,code',
+            'per_day' => 'required|min:1|integer',
             'min_overtime' => 'required|integer',
         ]);
 
@@ -46,6 +47,7 @@ class JobTitleController extends Controller
 
         $index->name = $request->name;
         $index->code = $request->code;
+        $index->per_day = $request->per_day;
         $index->book_overtime = isset($request->book_overtime) ? 1 : 0;
         $index->min_overtime = $request->min_overtime;
         
@@ -66,6 +68,7 @@ class JobTitleController extends Controller
     	$this->validate($request, [
             'name' => 'required',
             'code' => 'required|unique:job_title,code,'.$id,
+            'per_day' => 'required|min:1|integer',
             'min_overtime' => 'required|integer',
         ]);
 
@@ -73,6 +76,7 @@ class JobTitleController extends Controller
 
         $index->name = $request->name;
         $index->code = $request->code;
+        $index->per_day = $request->per_day;
         $index->book_overtime = isset($request->book_overtime) ? 1 : 0;
         $index->min_overtime = $request->min_overtime;
         

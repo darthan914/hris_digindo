@@ -16,8 +16,8 @@ class CreateAbsenceEmployeeDetail extends Migration
         Schema::create('absence_employee_detail', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('id_absence_employee');
-            $table->datetime('time_in');
-            $table->datetime('time_out');
+            $table->time('check_in')->nullable();
+            $table->time('check_out')->nullable();
             $table->timestamps();
         });
     }

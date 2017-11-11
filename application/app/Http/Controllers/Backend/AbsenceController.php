@@ -14,8 +14,8 @@ use Excel;
 use File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
-use Session;
 use Illuminate\Support\Facades\DB;
+use Session;
 
 class Grab
 {
@@ -54,9 +54,9 @@ class AbsenceController extends Controller
 
     public function scheduleData(Grab $grab, string $date = '0000-00-00')
     {
-        $day         = NULL;
-        $shift_in    = NULL;
-        $shift_out   = NULL;
+        $day         = null;
+        $shift_in    = null;
+        $shift_out   = null;
         $is_schedule = false;
 
         foreach ($grab->shift_detail as $list) {
@@ -96,12 +96,11 @@ class AbsenceController extends Controller
         return compact('start_dayoff', 'end_dayoff', 'total_dayoff', 'note', 'type', 'is_dayoff');
     }
 
-    public function attendanceData(Grab $grab, string $date = '0000-00-00', string $check_in = NULL, string $check_out = NULL)
+    public function attendanceData(Grab $grab, string $date = '0000-00-00', string $check_in = null, string $check_out = null)
     {
 
         $late = 0;
-        if($grab->shift)
-        {
+        if ($grab->shift) {
             $late = $grab->shift->late;
         }
 
@@ -112,10 +111,9 @@ class AbsenceController extends Controller
         $status_note   = '';
         $point_payroll = 0;
 
-        if ($schedule['is_schedule'] && $check_in && $check_out) 
-        {
-            $status = 'masuk';
-            $point_payroll   = 1;
+        if ($schedule['is_schedule'] && $check_in && $check_out) {
+            $status        = 'masuk';
+            $point_payroll = 1;
 
             if ($holiday['is_holiday']) {
                 $status        = 'libur';
@@ -123,47 +121,33 @@ class AbsenceController extends Controller
                 $point_payroll = 1.5;
             }
 
-        } 
-        else if ($schedule['is_schedule'] === false && $check_in && $check_out) 
-        {
-            $status = 'masuk';
-            $point_payroll   = 1.5;
-        } 
-        else if ($holiday['is_holiday'])
-        {
+        } else if ($schedule['is_schedule'] === false && $check_in && $check_out) {
+            $status        = 'masuk';
+            $point_payroll = 1.5;
+        } else if ($holiday['is_holiday']) {
             $status      = 'libur';
             $status_note = $holiday['name'];
-            
-            if ($schedule['is_schedule']) 
-            {
+
+            if ($schedule['is_schedule']) {
                 $point_payroll = 1;
             }
-        } 
-        else if ($dayoff['is_dayoff']) 
-        {
+        } else if ($dayoff['is_dayoff']) {
             $status        = $dayoff['type'];
             $status_note   = $dayoff['note'];
             $point_payroll = 1;
-        } 
-        else if ($schedule['is_schedule'] === false)
-        {
+        } else if ($schedule['is_schedule'] === false) {
             $status        = 'kosong';
             $point_payroll = 0;
-        }
-        else
-        {
+        } else {
             $status        = 'alpa';
             $point_payroll = -1;
         }
 
-
         if ($schedule['is_schedule'] && strtotime($schedule['shift_in']) < strtotime($check_in)) {
-            $point_late   = strtotime($check_in) - strtotime($schedule['shift_in']);
-            $minute_late  = (int) (($point_late / 60));
-            $point_late   = (int) (($point_late / 60) / max($late, 1));
-        }
-        else
-        {
+            $point_late  = strtotime($check_in) - strtotime($schedule['shift_in']);
+            $minute_late = (int) (($point_late / 60));
+            $point_late  = (int) (($minute_late - 1) / max($late, 1)) + 1;
+        } else {
             $minute_late = 0;
             $point_late  = 0;
         }
@@ -171,10 +155,10 @@ class AbsenceController extends Controller
         return compact('status', 'status_note', 'point_payroll', 'minute_late', 'point_late');
     }
 
-    public function overtimeData(Grab $grab, string $date = '0000-00-00', string $check_in = NULL, string $check_out = NULL)
+    public function overtimeData(Grab $grab, string $date = '0000-00-00', string $check_in = null, string $check_out = null)
     {
         $date_overtime        = '0000-00-00';
-        $datetime_endOvertime = NULL;
+        $datetime_endOvertime = null;
         $note                 = '';
         $check_leader         = 0;
 
@@ -192,52 +176,45 @@ class AbsenceController extends Controller
         $attendance = $this->attendanceData($grab, $date, $check_in, $check_out);
 
         $point_overtime = 0;
-        if ($grab->job_overtime->book_overtime)
-        {
-            if ($datetime_endOvertime)
-            {
+        if ($grab->job_overtime->book_overtime) {
+            if ($datetime_endOvertime) {
                 $lowOvertime = min(strtotime($date . ' ' . $check_out), strtotime($datetime_endOvertime));
 
                 $totalOvertime = $lowOvertime - strtotime($date . ' ' . $schedule['shift_out']);
 
                 $clockOvertime = (int) (($totalOvertime / 60) / 15) / 4;
-                if ($grab->job_overtime->min_overtime < (int) ($totalOvertime / 60) && $clockOvertime > 4)
-                {
+                if ($grab->job_overtime->min_overtime < (int) ($totalOvertime / 60) && $clockOvertime > 4) {
 
                     $point_overtime = 4 * $attendance['point_payroll'] + (($clockOvertime - 4) * (1.5 + $attendance['point_payroll']));
-                }
-                else
-                {
+                } else {
                     $point_overtime = $clockOvertime;
                 }
             }
 
-        }
-        else
-        {
-            if (strtotime($schedule['shift_out']) < strtotime($check_out))
-            {
+        } else {
+            if (strtotime($schedule['shift_out']) < strtotime($check_out)) {
                 $totalOvertime = strtotime($check_out) - strtotime($schedule['shift_out']);
 
-                if ($attendance['status'] === 'kosong')
-                {
+                if ($attendance['status'] === 'kosong') {
                     $totalOvertime = strtotime($check_out) - strtotime($check_in);
                 }
 
                 $clockOvertime = (int) (($totalOvertime / 60) / 15) / 4;
 
-                if ($grab->job_overtime->min_overtime < (int) ($totalOvertime / 60) && $clockOvertime > 4)
-                {
+                if ($grab->job_overtime->min_overtime < (int) ($totalOvertime / 60) && $clockOvertime > 4) {
                     $point_overtime = 4 * $attendance['point_payroll'] + (($clockOvertime - 4) * (1.5 + $attendance['point_payroll']));
-                }
-                else
-                {
+                } else {
                     $point_overtime = $clockOvertime;
                 }
             }
         }
 
         return compact('date_overtime', 'datetime_endOvertime', 'note', 'check_leader', 'point_overtime');
+    }
+
+    public function combineDatetime($date, $time = '00:00:00')
+    {
+        return date('Y-m-d', strtotime($date)) . ' ' . date('H:i:s', strtotime($time));
     }
 
     public function index(Request $request)
@@ -261,7 +238,7 @@ class AbsenceController extends Controller
 
         $absenceEmployee = AbsenceEmployee::find($id);
 
-        $absenceEmployeeDetail = AbsenceEmployeeDetail::where('id_absence_employee', $id)->get();
+        $absenceEmployeeDetail = AbsenceEmployeeDetail::where('id_absence_employee', $id)->orderBy('date', 'ASC')->get();
 
         $masuk   = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', 'masuk')->count();
         $libur   = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', 'libur')->count();
@@ -269,10 +246,10 @@ class AbsenceController extends Controller
         $izin    = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', 'izin')->count();
         $cuti    = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', 'cuti')->count();
         $alpa    = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', 'alpa')->count();
-        $present = AbsenceEmployeeDetail::where('id_absence_employee', $id)->where('status', '<>', 'kosong')->count();
+        $present = $absenceEmployee->per_day;
         $gaji    = AbsenceEmployeeDetail::where('id_absence_employee', $id)->sum('gaji');
         $lembur  = AbsenceEmployeeDetail::where('id_absence_employee', $id)->sum('point_overtime');
-        $telat   = AbsenceEmployeeDetail::where('id_absence_employee', $id)->sum('total_late');
+        $telat   = AbsenceEmployeeDetail::where('id_absence_employee', $id)->sum('point_late');
 
         return view('backend.absence.employeeDetail')->with(compact(
             'index',
@@ -302,7 +279,9 @@ class AbsenceController extends Controller
 
     public function store(Request $request)
     {
-        // return $request->all();
+        // ALTER TABLE `absence_employee_detail` ADD `date` DATE NOT NULL AFTER `id_absence_employee`;
+        // UPDATE `absence_employee_detail` SET `date` =`schedule_in`;
+        // ALTER TABLE `absence_employee_detail` CHANGE `time_in` `check_in` TIME NULL DEFAULT NULL, CHANGE `time_out` `check_out` TIME NULL DEFAULT NULL, CHANGE `schedule_in` `schedule_in` TIME NULL DEFAULT NULL, CHANGE `schedule_out` `schedule_out` TIME NULL DEFAULT NULL;
 
         $this->validate($request, [
             'name' => 'required',
@@ -316,14 +295,15 @@ class AbsenceController extends Controller
 
         // get data from excel
         $data = '';
-        if ($request->hasFile('excel')) {
+        if ($request->hasFile('excel'))
+        {
             $data = Excel::load($request->file('excel')->getRealPath(), function ($reader) {})->get();
-            // return $data;
         }
 
         // DB::beginTransaction();
 
-        if (!empty($data)) {
+        if ( !empty($data) )
+        {
             $absence = new Absence;
 
             $absence->name       = $request->name;
@@ -336,26 +316,39 @@ class AbsenceController extends Controller
             $return       = '';
             $init_machine = 0;
             foreach ($data as $list) {
-
                 if ($init_machine != $list['no._id']) {
                     $init_machine = $list['no._id'];
-                    $insert[]     = ['id_absence' => $absence->id, 'id_machine' => (int) $init_machine];
+
+                    $per_day = Employee::where('id_machine', $init_machine)->first();
+
+                    if($per_day)
+                    {
+                        $per_day = $per_day->jobTitle->per_day;
+                    }
+                    else
+                    {
+                        $per_day = 1;
+                    }
+
+                    $insert[]     = ['id_absence' => $absence->id, 'id_machine' => (int) $init_machine, 'per_day' => $per_day];
                 }
             }
 
             // insert into AbsenceEmployeeDetail
-            if (!empty($insert)) {
+            if ( !empty($insert) )
+            {
                 AbsenceEmployee::insert($insert);
 
                 $absenceEmployee = AbsenceEmployee::where('id_absence', $absence->id)->get();
 
-                foreach ($absenceEmployee as $list) {
-
-                    if (!empty($list->employee)) {
-
+                foreach ($absenceEmployee as $list)
+                {
+                    if (!empty($list->employee))
+                    {
                         $start = $list->absence->date_start;
 
-                        while ($start <= $list->absence->date_end) {
+                        while ($start <= $list->absence->date_end)
+                        {
                             $date[] = $start;
                             $start  = date('Y-m-d', strtotime($start . ' +1 day'));
                         }
@@ -387,7 +380,10 @@ class AbsenceController extends Controller
                             ->select('book_overtime', 'min_overtime')
                             ->first();
 
-                        foreach ($data as $list2) {
+                        $inserted_date = '';
+
+                        foreach ($data as $list2)
+                        {
                             $date_explode = explode('/', $list2['tanggal']);
 
                             $format_date  = $date_explode[0];
@@ -403,13 +399,16 @@ class AbsenceController extends Controller
                             $overtime   = $this->overtimeData($grab, $format_date_php, $check_in, $check_out);
                             $attendance = $this->attendanceData($grab, $format_date_php, $check_in, $check_out);
 
+                            $inserted_date[] = $format_date_php;
+
                             if ($list->id_machine == $list2['no._id']) {
                                 $insert2[] = [
                                     'id_absence_employee' => $list->id,
-                                    'schedule_in'         => $schedule['is_schedule'] ? $format_date_php . ' ' . $schedule['shift_in'] : '',
-                                    'schedule_out'        => $schedule['is_schedule'] ? $format_date_php . ' ' . $schedule['shift_out'] : '',
-                                    'time_in'             => $check_in ? $format_date_php . ' ' . $check_in : '',
-                                    'time_out'            => $check_out ? $format_date_php . ' ' . $check_out : '',
+                                    'date'                => $format_date_php,
+                                    'schedule_in'         => $schedule['is_schedule'] ? $schedule['shift_in'] : null,
+                                    'schedule_out'        => $schedule['is_schedule'] ? $schedule['shift_out'] : null,
+                                    'check_in'            => $check_in ?? null,
+                                    'check_out'           => $check_out ?? null,
                                     'status'              => $attendance['status'],
                                     'status_note'         => $attendance['status_note'],
                                     'gaji'                => $attendance['point_payroll'],
@@ -417,13 +416,38 @@ class AbsenceController extends Controller
                                     'time_overtime'       => $overtime['datetime_endOvertime'],
                                     'point_overtime'      => $overtime['point_overtime'],
                                     'payment_overtime'    => $list->employee->uang_lembur,
-                                    'total_late'          => $attendance['point_late'],
+                                    'point_late'          => $attendance['point_late'],
+                                    'fine_late'           => $list->employee->uang_telat,
+                                ];
+                            }
+                        }
+
+                        foreach ($date as $list2) {
+                            if(!in_array($list2, $inserted_date))
+                            {
+                                $attendance = $this->attendanceData($grab, $list2);
+                                
+                                $insert2[] = [
+                                    'id_absence_employee' => $list->id,
+                                    'date'                => $list2,
+                                    'schedule_in'         => null,
+                                    'schedule_out'        => null,
+                                    'check_in'            => null,
+                                    'check_out'           => null,
+                                    'status'              => $attendance['status'],
+                                    'status_note'         => $attendance['status_note'],
+                                    'gaji'                => $attendance['point_payroll'],
+                                    'gaji_pokok'          => $list->employee->gaji_pokok,
+                                    'time_overtime'       => null,
+                                    'point_overtime'      => 0,
+                                    'payment_overtime'    => $list->employee->uang_lembur,
+                                    'point_late'          => $attendance['point_late'],
                                     'fine_late'           => $list->employee->uang_telat,
                                 ];
                             }
                         }
                     }
-                }
+                } // endforeach
 
                 // DB::rollBack();
                 // return $insert2;
@@ -544,7 +568,7 @@ class AbsenceController extends Controller
         $overtime = Overtime::where('id_employee', $absenceEmployee->employee->id)->whereDate('date', date('Y-m-d', strtotime($request->date)))->first();
 
         $status = $status_note = null;
-        
+
         if ($holiday) {
             $status      = 'libur';
             $status_note = $holiday->name;
@@ -552,7 +576,7 @@ class AbsenceController extends Controller
             $status      = 'cuti';
             $status_note = $dayoff->note;
         }
-        
+
         return compact('status', 'status_note', 'shift', 'overtime');
     }
 
@@ -566,34 +590,6 @@ class AbsenceController extends Controller
     {
         $absenceEmployee = AbsenceEmployee::find($id);
 
-        $gaji = 0;
-        
-        if ($request->status == 'masuk' && $request->time_in && $request->time_out) {
-            $gaji = 1;
-        }
-        if ($request->status == 'kosong' && $request->time_in && $request->time_out) {
-            $gaji = 1.5;
-        }
-        if ($request->status == 'libur' && $request->time_in && $request->time_out){
-            $gaji = 1.5;
-        }
-        if(in_array($request->status, ['libur', 'izin', 'cuti', 'sakit']) && !$request->time_in && !$request->time_out)
-        {
-            $gaji = 1;
-        }
-        if($request->status == 'alpa')
-        {
-            $gaji = -1;
-            $request->time_in = '00:00:00';
-            $request->time_out = '00:00:00';
-        }
-
-        $schedule_in  = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->schedule_in));
-        $schedule_out = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->schedule_out));
-        $time_in      = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->time_in));
-        $time_out     = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->time_out));
-
-
         $grab = new Grab;
 
         $grab->holiday = Holiday::where('date', $request->date)->get();
@@ -601,61 +597,57 @@ class AbsenceController extends Controller
         $grab->shift = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
             ->join('attendance', 'attendance.id_job_title', '=', 'job_title.id')
             ->join('shift', 'shift.id', '=', 'attendance.id_shift')
-            ->where('employee.id', $list->employee->id)
+            ->where('employee.id', $absenceEmployee->employee->id)
             ->select('late')
             ->first();
 
         $grab->shift_detail = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
             ->join('attendance', 'attendance.id_job_title', '=', 'job_title.id')
             ->join('shift_detail', 'shift_detail.id_shift', '=', 'attendance.id_shift')
-            ->where('employee.id', $list->employee->id)
+            ->where('employee.id', $absenceEmployee->employee->id)
             ->select('day', 'shift_in', 'shift_out')
             ->get();
 
-        $grab->dayoff = Dayoff::where('start_dayoff', $request->date)->where('id_employee', $list->employee->id)->get();
+        $grab->dayoff = Dayoff::where('start_dayoff', $request->date)->where('id_employee', $absenceEmployee->employee->id)->get();
 
-        $grab->overtime = Overtime::where('id_employee', $list->employee->id)->get();
+        $grab->overtime = Overtime::where('id_employee', $absenceEmployee->employee->id)->get();
 
         $grab->job_overtime = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
-            ->where('employee.id', $list->employee->id)
+            ->where('employee.id', $absenceEmployee->employee->id)
             ->select('book_overtime', 'min_overtime')
             ->first();
 
-        $overtime = $this->overtimeData($grab, $request->date, $request->time_in, $request->time_out);
-
-        $totalLate = $fine_late = 0;
-        if ($request->status != 'kosong' && $schedule_in < $time_in) {
-            $totalLate = strtotime($time_in) - strtotime($schedule_in);
-            $totalLate = (int) (($totalLate / 60) / $shift->late);
-        }
+        $overtime   = $this->overtimeData($grab, $request->date, $request->check_in, $request->check_out);
+        $attendance = $this->attendanceData($grab, $request->date, $request->check_in, $request->check_out);
 
         $this->validate($request, [
-            'schedule_in' => 'required',
-            'schedule_out' => 'required',
-            'time_in' => 'required_unless:status,kosong',
-            'time_out' => 'required_unless:status,kosong',
-            'status_note' => 'required_unless:status,kosong,status,masuk',
-            'gaji_pokok' => 'required|numeric',
+            'date'          => 'required|date',
+            'schedule_in'   => 'required',
+            'schedule_out'  => 'required',
+            'check_in'      => 'required_unless:status,kosong',
+            'check_out'     => 'required_unless:status,kosong',
+            'status_note'   => 'required_unless:status,kosong,status,masuk',
+            'gaji_pokok'    => 'required|numeric',
             'time_overtime' => 'nullable|date',
-            'fine_late' => 'required',
+            'fine_late'     => 'required',
         ]);
 
-
         $index = new AbsenceEmployeeDetail;
-    
+
         $index->id_absence_employee = $id;
-        $index->schedule_in         = $schedule_in;
-        $index->schedule_out        = $schedule_out;
-        $index->time_in             = $time_in;
-        $index->time_out            = $time_out;
+        $index->date                = date('Y-m-d', strtotime($request->date));
+        $index->schedule_in         = date('H:i:s', strtotime($request->schedule_in));
+        $index->schedule_out        = date('H:i:s', strtotime($request->schedule_out));
+        $index->check_in            = date('H:i:s', strtotime($request->check_in));
+        $index->check_out           = date('H:i:s', strtotime($request->check_out));
         $index->status              = $request->status;
         $index->status_note         = $request->status_note;
-        $index->gaji                = $request->gaji ?: $gaji;
+        $index->gaji                = $request->gaji ?: $attendance['point_payroll'];
         $index->gaji_pokok          = $request->gaji_pokok;
-        $index->time_overtime       = date('Y-m-d H:i:s', strtotime($request->time_overtime));
+        $index->time_overtime       = $request->time_overtime ? date('Y-m-d H:i:s', strtotime($request->time_overtime)) : null;
         $index->point_overtime      = $request->point_overtime ?: $overtime['point_overtime'];
         $index->payment_overtime    = $request->payment_overtime;
-        $index->total_late          = $totalLate;
+        $index->point_late          = $attendance['point_late'];
         $index->fine_late           = $request->fine_late;
         $index->fine_additional     = $request->fine_additional;
 
@@ -675,33 +667,6 @@ class AbsenceController extends Controller
     {
         $absenceEmployee = AbsenceEmployee::find($id);
 
-        $gaji = 0;
-        
-        if ($request->status == 'masuk' && $request->time_in && $request->time_out) {
-            $gaji = 1;
-        }
-        if ($request->status == 'kosong' && $request->time_in && $request->time_out) {
-            $gaji = 1.5;
-        }
-        if ($request->status == 'libur' && $request->time_in && $request->time_out){
-            $gaji = 1.5;
-        }
-        if(in_array($request->status, ['libur', 'izin', 'cuti', 'sakit']) && !$request->time_in && !$request->time_out)
-        {
-            $gaji = 1;
-        }
-        if($request->status == 'alpa')
-        {
-            $gaji = -1;
-            $request->time_in = '00:00:00';
-            $request->time_out = '00:00:00';
-        }
-
-        $schedule_in  = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->schedule_in));
-        $schedule_out = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->schedule_out));
-        $time_in      = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->time_in));
-        $time_out     = date('Y-m-d', strtotime($request->date)).' '.date('H:i:s', strtotime($request->time_out));
-
         $grab = new Grab;
 
         $grab->holiday = Holiday::where('date', $request->date)->get();
@@ -709,65 +674,83 @@ class AbsenceController extends Controller
         $grab->shift = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
             ->join('attendance', 'attendance.id_job_title', '=', 'job_title.id')
             ->join('shift', 'shift.id', '=', 'attendance.id_shift')
-            ->where('employee.id', $list->employee->id)
+            ->where('employee.id', $absenceEmployee->employee->id)
             ->select('late')
             ->first();
 
         $grab->shift_detail = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
             ->join('attendance', 'attendance.id_job_title', '=', 'job_title.id')
             ->join('shift_detail', 'shift_detail.id_shift', '=', 'attendance.id_shift')
-            ->where('employee.id', $list->employee->id)
+            ->where('employee.id', $absenceEmployee->employee->id)
             ->select('day', 'shift_in', 'shift_out')
             ->get();
 
-        $grab->dayoff = Dayoff::where('start_dayoff', $request->date)->where('id_employee', $list->employee->id)->get();
+        $grab->dayoff = Dayoff::where('start_dayoff', $request->date)->where('id_employee', $absenceEmployee->employee->id)->get();
 
-        $grab->overtime = Overtime::where('id_employee', $list->employee->id)->get();
+        $grab->overtime = Overtime::where('id_employee', $absenceEmployee->employee->id)->get();
 
         $grab->job_overtime = Employee::join('job_title', 'job_title.id', '=', 'employee.id_job_title')
-            ->where('employee.id', $list->employee->id)
+            ->where('employee.id', $absenceEmployee->employee->id)
             ->select('book_overtime', 'min_overtime')
             ->first();
 
-        $overtime = $this->overtimeData($grab, $request->date, $request->time_in, $request->time_out);
-
-        $totalLate = $fine_late = 0;
-        if ($request->status != 'kosong' && $schedule_in < $time_in) {
-            $totalLate = strtotime($time_in) - strtotime($schedule_in);
-            $totalLate = (int) (($totalLate / 60) / $shift->late);
-        }
+        $overtime   = $this->overtimeData($grab, $request->date, $request->check_in, $request->check_out);
+        $attendance = $this->attendanceData($grab, $request->date, $request->check_in, $request->check_out);
 
         $this->validate($request, [
-            'schedule_in' => 'required',
-            'schedule_out' => 'required',
-            'time_in' => 'required_unless:status,kosong',
-            'time_out' => 'required_unless:status,kosong',
-            'status_note' => 'required_unless:status,kosong,status,masuk',
-            'gaji_pokok' => 'required|numeric',
+            'date'          => 'required|date',
+            'schedule_in'   => 'required',
+            'schedule_out'  => 'required',
+            'check_in'      => 'required_unless:status,kosong',
+            'check_out'     => 'required_unless:status,kosong',
+            'status_note'   => 'required_unless:status,kosong,status,masuk',
+            'gaji_pokok'    => 'required|numeric',
             'time_overtime' => 'nullable|date',
-            'fine_late' => 'required',
+            'fine_late'     => 'required',
         ]);
 
-
         $index = AbsenceEmployeeDetail::find($request->id);
-    
-        $index->schedule_in         = $schedule_in;
-        $index->schedule_out        = $schedule_out;
-        $index->time_in             = $time_in;
-        $index->time_out            = $time_out;
-        $index->status              = $request->status;
-        $index->status_note         = $request->status_note;
-        $index->gaji                = $request->gaji ?: $gaji;
-        $index->gaji_pokok          = $request->gaji_pokok;
-        $index->time_overtime       = date('Y-m-d H:i:s', strtotime($request->time_overtime));
-        $index->point_overtime      = $request->point_overtime ?: $overtime['point_overtime'];
-        $index->payment_overtime    = $request->payment_overtime;
-        $index->total_late          = $totalLate;
-        $index->fine_late           = $request->fine_late;
-        $index->fine_additional     = $request->fine_additional;
+
+        $index->date             = date('Y-m-d', strtotime($request->date));
+        $index->schedule_in      = date('H:i:s', strtotime($request->schedule_in));
+        $index->schedule_out     = date('H:i:s', strtotime($request->schedule_out));
+        $index->check_in         = date('H:i:s', strtotime($request->check_in));
+        $index->check_out        = date('H:i:s', strtotime($request->check_out));
+        $index->status           = $request->status;
+        $index->status_note      = $request->status_note;
+        $index->gaji             = $request->gaji ?: $attendance['point_payroll'];
+        $index->gaji_pokok       = $request->gaji_pokok;
+        $index->time_overtime    = $request->time_overtime ? date('Y-m-d H:i:s', strtotime($request->time_overtime)) : null;
+        $index->point_overtime   = $request->point_overtime ?: $overtime['point_overtime'];
+        $index->payment_overtime = $request->payment_overtime;
+        $index->point_late       = $attendance['point_late'];
+        $index->fine_late        = $request->fine_late;
+        $index->fine_additional  = $request->fine_additional;
 
         $index->save();
 
         return redirect()->route('admin.absence.employeeDetail', ['id' => $id])->with('success', 'Data has been added.');
+    }
+
+    public function deleteAbsenceEmployeeDetail($id, Request $request)
+    {
+        AbsenceEmployeeDetail::destroy($request->id);
+
+        return redirect()->back()->with('success', 'Data has been deleted.');
+    }
+
+    public function changePerday($id, Request $request)
+    {
+        $this->validate($request, [
+            'per_day'   => 'required|integer|min:1',
+        ]);
+
+        $index = AbsenceEmployee::find($id);
+
+        $index->per_day = $request->per_day;
+
+        $index->save();
+
+        return redirect()->back()->with('success', 'Data Has Been Updated');
     }
 }

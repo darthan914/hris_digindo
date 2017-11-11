@@ -53,12 +53,21 @@
 	        singleDatePicker: true,
 	        timePicker24Hour: true,
 	        timePicker: true,
-	        showDropdowns: true
+	        showDropdowns: true,
+	        autoUpdateInput: false,
 	    });
+
+	    $('input[name="time_overtime"]').on('apply.daterangepicker', function(ev, picker) {
+      		$(this).val(picker.startDate.format('DD MMMM YYYY HH:mm'));
+		});
+
+		$('input[name="time_overtime"]').on('cancel.daterangepicker', function(ev, picker) {
+	    	$(this).val('');
+		});
 
 	    $('select[name="status"]').select2();
 
-	    $('input[name="schedule_in"], input[name="schedule_out"], input[name="time_in"], input[name="time_out"]').timepicker({
+	    $('input[name="schedule_in"], input[name="schedule_out"], input[name="check_in"], input[name="check_out"]').timepicker({
 		    timeFormat: 'H:mm',
 		    interval: 1,
 		    startTime: '5:00',
@@ -93,7 +102,7 @@
 				<label for="date" class="control-label col-md-3 col-sm-3 col-xs-12">Tanggal <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="for" name="date" class="form-control {{$errors->first('date') != '' ? 'parsley-error' : ''}}" value="{{ old('date', date('d F Y', strtotime($index->schedule_in) ) ) }}">
+					<input type="text" id="for" name="date" class="form-control {{$errors->first('date') != '' ? 'parsley-error' : ''}}" value="{{ old('date', date('d F Y', strtotime($index->date) ) ) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('date') }}</li>
 					</ul>
@@ -123,23 +132,23 @@
 			</div>
 
 			<div class="form-group">
-				<label for="time_in" class="control-label col-md-3 col-sm-3 col-xs-12">Absen Jam Masuk <span class="required">*</span>
+				<label for="check_in" class="control-label col-md-3 col-sm-3 col-xs-12">Absen Jam Masuk <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="time_in" name="time_in" class="form-control {{$errors->first('time_in') != '' ? 'parsley-error' : ''}}" value="{{ old('time_in', date('H:i', strtotime($index->time_in))) }}">
+					<input type="text" id="check_in" name="check_in" class="form-control {{$errors->first('check_in') != '' ? 'parsley-error' : ''}}" value="{{ old('check_in', date('H:i', strtotime($index->check_in))) }}">
 					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('time_in') }}</li>
+						<li class="parsley-required">{{ $errors->first('check_in') }}</li>
 					</ul>
 				</div>
 			</div>
 
 			<div class="form-group">
-				<label for="time_out" class="control-label col-md-3 col-sm-3 col-xs-12">Absen Jam Keluar <span class="required">*</span>
+				<label for="check_out" class="control-label col-md-3 col-sm-3 col-xs-12">Absen Jam Keluar <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="time_out" name="time_out" class="form-control {{$errors->first('time_out') != '' ? 'parsley-error' : ''}}" value="{{ old('time_out', date('H:i', strtotime($index->time_out))) }}">
+					<input type="text" id="check_out" name="check_out" class="form-control {{$errors->first('check_out') != '' ? 'parsley-error' : ''}}" value="{{ old('check_out', date('H:i', strtotime($index->check_out))) }}">
 					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('time_out') }}</li>
+						<li class="parsley-required">{{ $errors->first('check_out') }}</li>
 					</ul>
 				</div>
 			</div>
@@ -178,7 +187,7 @@
 				<label for="time_overtime" class="control-label col-md-3 col-sm-3 col-xs-12">Jam Lembur
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="for" name="time_overtime" class="form-control {{$errors->first('time_overtime') != '' ? 'parsley-error' : ''}}" value="{{ old('time_overtime', date('d F Y H:i:s', strtotime($index->time_overtime))) }}">
+					<input type="text" id="for" name="time_overtime" class="form-control {{$errors->first('time_overtime') != '' ? 'parsley-error' : ''}}" value="{{ old('time_overtime', date('d F Y H:i:s', strtotime($index->time_overtime)) ) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('time_overtime') }}</li>
 					</ul>
@@ -203,6 +212,17 @@
 					<input type="text" id="for" name="payment_overtime" class="form-control {{$errors->first('payment_overtime') != '' ? 'parsley-error' : ''}}" value="{{ old('payment_overtime', $index->payment_overtime) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('payment_overtime') }}</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="gaji" class="control-label col-md-3 col-sm-3 col-xs-12">Gaji Point
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<input type="text" id="for" name="gaji" class="form-control {{$errors->first('gaji') != '' ? 'parsley-error' : ''}}" value="{{ old('gaji', $index->gaji) }}">
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('gaji') }}</li>
 					</ul>
 				</div>
 			</div>

@@ -7,11 +7,13 @@
 @section('script')
 <script src="{{ asset('backend/vendors/datatables.net/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('backend/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js') }}"></script>
+<link href="{{ asset('backend/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ asset('backend/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css') }}" rel="stylesheet">
 <script type="text/javascript">
 	$(function() {
-		$('#datatable-buttons').DataTable({
+		$('#datatable').DataTable({
 			"columnDefs": [
-				{ "orderable": false, "targets": 0 }
+				{ "orderable": true, "targets": 0 }
 			]
 		});
 
@@ -25,11 +27,67 @@
 				$('.' + $(this).attr('data-target')).prop('checked', false);
 			}
 		});
+
+		$('#datatable').on('click', '.delete-employeeDetail', function(){
+			$('.id-ondelete').val($(this).data('id'));
+		});
 	});
 </script>
 @endsection
 
 @section('content')
+
+	<div id="change-perday" class="modal fade" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<form class="form-horizontal form-label-left" action="{{ route('admin.absence.changePerday', ['id' => $absenceEmployee->id ]) }}" method="post" enctype="multipart/form-data">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+						<h4 class="modal-title">Ganti Hari per Bulan</h4>
+					</div>
+					<div class="modal-body">
+						<div class="form-group">
+							<label for="per_day" class="control-label col-md-3 col-sm-3 col-xs-12">Per Hari <span class="required">*</span>
+							</label>
+							<div class="col-md-9 col-sm-9 col-xs-12">
+								<input type="text" class="form-control {{$errors->first('per_day') != '' ? 'parsley-error' : ''}}" name="per_day" value="{{ $absenceEmployee->per_day }}">
+								<ul class="parsley-errors-list filled">
+									<li class="parsley-required">{{ $errors->first('per_day') }}</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						{{ csrf_field() }}
+						<button type="submit" class="btn btn-success">Submit</button>
+						<button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	{{-- Delete Absence --}}
+	<div id="delete-employeeDetail" class="modal fade" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<form class="form-horizontal form-label-left" action="{{ route('admin.absence.deleteAbsenceEmployeeDetail', ['id' => $absenceEmployee->id]) }}" method="post" enctype="multipart/form-data">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+						<h4 class="modal-title">Delete Detail Absence?</h4>
+					</div>
+					<div class="modal-body">
+					</div>
+					<div class="modal-footer">
+						{{ csrf_field() }}
+						<input type="hidden" name="id" class="id-ondelete" value="{{old('id')}}">
+						<button type="submit" class="btn btn-danger">Delete</button>
+						<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
 
 	<h1>Laporan Absen - {{ $absenceEmployee->employee->name or $absenceEmployee->id_machine }}</h1>
 	<div class="x_panel" style="overflow: auto;">
@@ -49,7 +107,7 @@
 
 		<div class="ln_solid"></div>
 
-		<table class="table table-striped table-bordered" id="datatable-buttons">
+		<table class="table table-striped table-bordered" id="datatable">
 			<thead>
 				<tr>
 					{{-- <th width="100" nowrap>
@@ -80,9 +138,9 @@
 							<input type="checkbox" class="check" value="{{ $list->id }}" name="id[]" form="action">
 						</td> --}}
 						<td>{{ $count++ }}</td>
-						<td>{{ date('d/m/Y', strtotime($list->schedule_in)) }}</td>
-						<td>{{ date('H:i', strtotime($list->time_in)) }}</td>
-						<td>{{ date('H:i', strtotime($list->time_out)) }}</td>
+						<td>{{ date('D - d/m/Y', strtotime($list->date)) }}</td>
+						<td>{{ date('H:i', strtotime($list->check_in)) }}</td>
+						<td>{{ date('H:i', strtotime($list->check_out)) }}</td>
 						<td>{{ $list->status }} : {{ $list->status_note or '' }}</td>
 						<td>Rp. {{ number_format($list->gaji_pokok) }}</td>
 						<td>Rp. {{ number_format($list->gaji_pokok / $present) }}</td>
@@ -92,13 +150,22 @@
 						</td>
 						
 						<td>{{ $list->time_overtime >= '1900-01-01 00:00:00' ? date('d-m-Y H:i', strtotime($list->time_overtime)) : '-' }}</td>
-						<td>Rp. {{ number_format($total_lembur += $list->point_overtime * $list->payment_overtime) }} ({{ $list->point_overtime }})</td>
-						<td>Rp. {{ number_format($total_telat += $list->total_late * $list->fine_late) }} ({{$list->total_late}})</td>
-						<td>Rp. {{ number_format($total_denda +=$list->fine_additional) }}</td>
+						<td>
+							@php $total_lembur += $list->point_overtime * $list->payment_overtime; @endphp
+							Rp. {{ number_format($list->point_overtime * $list->payment_overtime) }} ({{ $list->point_overtime }})
+						</td>
+						<td>
+							@php $total_telat += $list->point_late * $list->fine_late; @endphp
+							Rp. {{ number_format($list->point_late * $list->fine_late) }} ({{$list->point_late}})
+						</td>
+						<td>
+							@php $total_denda += $list->fine_additional; @endphp
+							Rp. {{ number_format($list->fine_additional) }}
+						</td>
 						
 						<td nowrap>
 							<a href="{{ route('admin.absence.editAbsenceEmployeeDetail', ['id' => $list->id ]) }}" class="btn btn-xs btn-primary"><i class="fa fa-pencil"></i></a>
-							<a href="" class="btn btn-xs btn-danger" onclick="return confirm('Hapus Data?')"><i class="fa fa-trash"></i></a>
+							<button class="btn btn-xs btn-danger delete-employeeDetail" data-toggle="modal" data-target="#delete-employeeDetail" data-id="{{ $list->id }}"><i class="fa fa-trash"></i></button>
 						</td>
 					</tr>
 				@endforeach
@@ -110,6 +177,10 @@
 		<div class="row">
 			<div class="col-md-6">
 				<table class="table table-striped table-bordered">
+					<tr>
+						<th>Hari Per Bulan</th>
+						<td>{{ $absenceEmployee->per_day }} <button class="btn btn-xs btn-primary change-perday" title="ganti hari per bulan" data-toggle="modal" data-target="#change-perday"><i class="fa fa-pencil"></i></button></td>
+					</tr>
 					<tr>
 						<th>Masuk Kerja</th>
 						<td>{{ $masuk }}</td>
@@ -156,7 +227,7 @@
 					</tr>
 					<tr>
 						<th>Gaji yang didapat</th>
-						<td>Rp. {{ number_format($total_gaji + $total_lembur + $total_telat + $total_denda) }}</td>
+						<td>Rp. {{ number_format($total_gaji + $total_lembur + $total_denda - $total_telat) }}</td>
 					</tr>
 				</table>
 			</div>

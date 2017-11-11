@@ -14,8 +14,9 @@ class AddMoreColoumnOnAbsenceEmployeeDetail extends Migration
     public function up()
     {
         Schema::table('absence_employee_detail', function (Blueprint $table) {
-            $table->datetime('schedule_in')->nullable();
-            $table->datetime('schedule_out')->nullable();
+            $table->date('date')->nullable();
+            $table->time('schedule_in')->nullable();
+            $table->time('schedule_out')->nullable();
             $table->string('status')->comment('masuk,izin,cuti,sakit,alpha,libur');
             $table->text('status_note')->nullable();
             $table->float('gaji', 12, 2)->comment('jika ada masuk hari libur tambah 0.5');

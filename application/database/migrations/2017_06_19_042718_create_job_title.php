@@ -17,6 +17,7 @@ class CreateJobTitle extends Migration
             $table->increments('id');
             $table->string('name');
             $table->string('code')->unique();
+            $table->integer('per_day')->default(26)->comment('hitungan hari masuk per bulan');
             $table->timestamps();
         });
     }

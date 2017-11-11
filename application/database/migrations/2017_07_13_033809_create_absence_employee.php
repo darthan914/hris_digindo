@@ -17,6 +17,7 @@ class CreateAbsenceEmployee extends Migration
             $table->increments('id');
             $table->integer('id_absence');
             $table->integer('id_machine');
+            $table->integer('per_day')->default(0)->comment('jumlah hari masuk per bulan');
             $table->timestamps();
         });
     }

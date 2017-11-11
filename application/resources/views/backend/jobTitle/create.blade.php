@@ -37,6 +37,17 @@
 				</div>
 			</div>
 
+			<div class="form-group">
+				<label for="per_day" class="control-label col-md-3 col-sm-3 col-xs-12">Per Hari <span class="required">*</span>
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<input type="text" id="per_day" name="per_day" class="form-control {{$errors->first('per_day') != '' ? 'parsley-error' : ''}}" value="{{ old('per_day') }}">
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('per_day') }}</li>
+					</ul>
+				</div>
+			</div>
+
 
 			<div class="form-group">
 				<label for="book_overtime" class="control-label col-md-3 col-sm-3 col-xs-12">Butuh Buku Lembur
