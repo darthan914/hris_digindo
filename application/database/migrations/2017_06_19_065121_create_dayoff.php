@@ -23,6 +23,7 @@ class CreateDayoff extends Migration
             $table->boolean('half_day')->default(0)->comment('bila masuk siangan atau pulang cepat');
             $table->string('type')->comment('izin, cuti, sakit');
             $table->text('note')->comment('keterangan');
+            $table->boolean('check_leader')->default(0)->comment('bila belum check ada leader, dayoff tidak dihitung');
             $table->timestamps();
         });
     }

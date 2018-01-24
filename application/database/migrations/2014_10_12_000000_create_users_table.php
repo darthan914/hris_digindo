@@ -20,9 +20,10 @@ class CreateUsersTable extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->boolean('active')->default(0);
-            $table->boolean('access')->default(0);
-            $table->text('permission')->nullable();
-            $table->integer('actor')->default(0);
+            $table->integer('id_role');
+            $table->text('grant')->nullable();
+            $table->text('denied')->nullable();
+            $table->integer('leader')->nullable();
             $table->text('avatar')->nullable();
             $table->rememberToken();
             $table->timestamps();

@@ -15,7 +15,7 @@ class CreateShiftDetail extends Migration
     {
         Schema::create('shift_detail', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('id_shift')->comment('bila parent tidak memiliki child, defaultnya ke parent, senin sampai jumat');
+            $table->integer('id_shift');
             $table->integer('day')->comment('0= minggu, … , 6=sabtu');
             $table->time('shift_in');
             $table->time('shift_out');

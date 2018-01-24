@@ -36,7 +36,7 @@
 
 	<h1>Shift {{ $shift->name }} - Edit</h1>
 	<div class="x_panel">
-		<form class="form-horizontal form-label-left" action="{{ route('admin.shiftDetail.update', ['id' => $index->id]) }}" method="post" enctype="multipart/form-data">
+		<form class="form-horizontal form-label-left" action="{{ route('admin.shift.updateDetail', ['id' => $index->id]) }}" method="post" enctype="multipart/form-data">
 
 
 			<div class="form-group">

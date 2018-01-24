@@ -13,6 +13,7 @@ use Session;
 use File;
 use Hash;
 use Validator;
+use Datatables;
 
 use App\Http\Controllers\Controller;
 
@@ -30,6 +31,85 @@ class OvertimeController extends Controller
 		return view('backend.overtime.index')->with(compact('index'));
 	}
 
+	public function datatables(Request $request)
+    {
+        $index = Overtime::join('employee', 'overtime.id_employee', 'employee.id')->select('overtime.*', 'employee.name')->get();
+
+        $datatables = Datatables::of($index);
+
+        $datatables->addColumn('action', function ($index) {
+            $html = '';
+
+            if(Auth::user()->can('edit-overtime'))
+            {
+                $html .= '
+                    <a href="' . route('admin.overtime.edit', ['id' => $index->id]) . '" class="btn btn-xs btn-warning"><i class="fa fa-pencil"></i></a>
+                ';
+            }
+
+            if(Auth::user()->can('delete-overtime'))
+            {
+                $html .= '
+                    <button class="btn btn-xs btn-danger delete-overtime" data-toggle="modal" data-target="#delete-overtime" data-id="'.$index->id.'"><i class="fa fa-trash"></i></button>
+                ';
+            }
+
+            if(Auth::user()->can('confirm-overtime') && $index->check_leader == 0)
+            {
+                $html .= '
+                    <button class="btn btn-xs btn-success confirm-overtime" data-toggle="modal" data-target="#confirm-overtime" data-id="'.$index->id.'"><i class="fa fa-check"></i></button>
+                ';
+            }
+
+            if(Auth::user()->can('confirm-overtime') && $index->check_leader == 1)
+            {
+                $html .= '
+                    <button class="btn btn-xs btn-warning cancel-overtime" data-toggle="modal" data-target="#cancel-overtime" data-id="'.$index->id.'"><i class="fa fa-times"></i></button>
+                ';
+            }
+
+            return $html;
+        });
+
+        $datatables->editColumn('check_leader', function ($index) {
+            $html = '';
+            if($index->check_leader)
+            {
+                $html .= '
+                    <span class="label label-info">Konfirmasi</span>
+                ';
+            }
+            else
+            {
+                $html .= '
+                    <span class="label label-default">Belum Konfirmasi</span>
+                ';
+            }
+            return $html;
+        });
+
+        $datatables->editColumn('date', function ($index) {
+            return date('d/m/Y', strtotime($index->date));
+        });
+
+        $datatables->editColumn('end_overtime', function ($index) {
+            return date('d/m/Y H:i:s', strtotime($index->end_overtime));
+        });
+
+        $datatables->addColumn('check', function ($index) {
+            $html = '';
+
+            $html .= '
+                <input type="checkbox" class="check" value="' . $index->id . '" name="id[]" form="action">
+            ';
+
+            return $html;
+        });
+
+        $datatables = $datatables->make(true);
+        return $datatables;
+    }
+
 	public function create()
 	{
 		$employee = Employee::all();
@@ -41,20 +121,20 @@ class OvertimeController extends Controller
 	{
 
 		$message = [
-			'id_employee.required' => 'mohon pilih karyawan',
-			'id_employee.integer' => 'karyawan tidak valid',
-			'date.required' => 'mohon diisi',
-			'date.date' => 'format dalam bentuk tanggal',
+			'id_employee.required'  => 'mohon pilih karyawan',
+			'id_employee.integer'   => 'karyawan tidak valid',
+			'date.required'         => 'mohon diisi',
+			'date.date'             => 'format dalam bentuk tanggal',
 			'end_overtime.required' => 'mohon diisi',
-			'end_overtime.date' => 'format dalam bentuk tanggal dan jam',
-			'note.required' => 'mohon diisi',
+			'end_overtime.date'     => 'format dalam bentuk tanggal dan jam',
+			'note.required'         => 'mohon diisi',
 		];
 
 		$validator = Validator::make($request->all(), [
-			'id_employee' => 'required|integer',
-			'date' => 'required|date',
+			'id_employee'  => 'required|integer',
+			'date'         => 'required|date',
 			'end_overtime' => 'required|date',
-			'note' => 'required',
+			'note'         => 'required',
 		], $message);
 
 		if($validator->fails())
@@ -64,10 +144,10 @@ class OvertimeController extends Controller
 
 		$index = new Overtime;
 
-		$index->id_employee = $request->id_employee;
-		$index->date = date('Y-m-d', strtotime($request->date));
+		$index->id_employee  = $request->id_employee;
+		$index->date         = date('Y-m-d', strtotime($request->date));
 		$index->end_overtime = date('Y-m-d H:i:s', strtotime($request->end_overtime));
-		$index->note = $request->note;
+		$index->note         = $request->note;
 		$index->check_leader = 0;
 		
 		$index->save();
@@ -122,9 +202,9 @@ class OvertimeController extends Controller
 		return redirect()->route('admin.overtime');
 	}
 
-	public function delete($id)
+	public function delete(Request $request)
 	{
-		Overtime::destroy($id);
+		Overtime::destroy($request->id);
 
 		Session::flash('success', 'Data Has Been Deleted');
 		return redirect()->route('admin.overtime');
@@ -151,23 +231,22 @@ class OvertimeController extends Controller
 		return redirect()->route('admin.overtime');
 	}
 
-	public function active($id, $action)
-	{
-		$index = Overtime::find($id);
+	public function confirm(Request $request)
+    {
+        $index = Overtime::find($request->id);
 
-		$index->active = $action;
+        if($index->check_leader)
+        {
+            $index->check_leader = 0;
+        }
+        else
+        {
+            $index->check_leader = 1;
+        }
 
-		$index->save();
+        $index->save();
 
-		if($action == 1)
-		{
-			Session::flash('success', 'Data Has Been Actived');
-		}
-		else
-		{
-			Session::flash('success', 'Data Has Been Inactived');
-		}
-
-		return redirect()->route('admin.overtime');
-	}
+        Session::flash('success', 'Data berhasil diupdate');
+        return redirect()->route('admin.overtime');
+    }
 }

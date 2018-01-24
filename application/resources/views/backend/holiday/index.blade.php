@@ -12,10 +12,34 @@
 <script src="{{ asset('backend/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js') }}"></script>
 <script type="text/javascript">
 	$(function() {
-		$('#datatable-buttons').DataTable({
-			"columnDefs": [
-				{ "orderable": false, "targets": 0 }
-			]
+		var table = $('#datatable').DataTable({
+			processing: true,
+			serverSide: true,
+			ajax: {
+				url: "{{ route('admin.holiday.datatables') }}",
+				type: "post",
+			},
+			columns: [
+				{data: 'check', orderable: false, searchable: false},
+
+				{data: 'name'},
+				{data: 'date'},
+				{data: 'type'},
+
+				{data: 'action', orderable: false, searchable: false, sClass: 'nowarp-cell'},
+			],
+			initComplete: function () {
+				this.api().columns().every(function () {
+					var column = this;
+					var input = document.createElement("input");
+					$(input).appendTo($(column.footer()).empty())
+					.on('keyup', function () {
+						column.search($(this).val(), false, false, true).draw();
+					});
+				});
+			},
+			scrollY: "400px",
+			// scrollX: true,
 		});
 
 		$(".check-all").click(function(){
@@ -29,71 +53,77 @@
 			}
 		});
 
+		$('#datatable').on('click', '.delete-holiday', function(){
+			$('.id_holiday-ondelete').val($(this).data('id'));
+		});
+
 	});
 </script>
 @endsection
 
+@section('css')
+<link href="{{ asset('backend/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ asset('backend/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css') }}" rel="stylesheet">
+<style type="text/css">
+	.nowarp-cell{
+		white-space: nowrap;
+	}
+</style>
+@endsection
+
 @section('content')
 
-	<h1>Libur</h1>
-	<div class="x_panel" style="overflow: auto;">
-		<div class="row">
-			<div class="col-md-6">
-				<form method="get" id="filter-index" class="form-inline">
-					<select name="f_year" class="form-control" onchange="this.form.submit()">
-						<option value="">-- Filter Tahun --</option>
-						@foreach($year as $list)
-						<option value="{{ $list->year }}" @if($f_year == $list->year) selected @endif>{{ $list->year }}</option>
-						@endforeach
-					</select>
-				</form>
-			</div>
-			<div class="col-md-6">
-				<form method="post" id="action" action="{{ route('admin.holiday.action') }}" class="form-inline text-right" onsubmit="return confirm('Anda yakin untuk menerapkan yang dipilih')">
-					<a href="{{ route('admin.holiday.create') }}" class="btn btn-default">Buat Baru</a>
-					<select class="form-control" name="action">
-						<option value="delete">Hapus</option>
-					</select>
-					<button type="submit" class="btn btn-success">Terapkan yang dipilih</button>
+	@can('delete-holiday')
+	{{-- Delete Leave --}}
+	<div id="delete-holiday" class="modal fade" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<form class="form-horizontal form-label-left" action="{{ route('admin.holiday.delete') }}" method="post" enctype="multipart/form-data">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+						<h4 class="modal-title">Hapus Hibur?</h4>
+					</div>
+					<div class="modal-body">
+					</div>
+					<div class="modal-footer">
+						{{ csrf_field() }}
+						<input type="hidden" name="id" class="id_holiday-ondelete" value="{{old('id')}}">
+						<button type="submit" class="btn btn-danger">Hapus</button>
+						<button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+					</div>
 				</form>
 			</div>
 		</div>
-		
+	</div>
+	@endcan
 
-		
-		<table class="table table-striped table-bordered" id="datatable-buttons">
+
+	<h1>Libur</h1>
+	<div class="x_panel" style="overflow: auto;">
+		<form method="post" id="action" action="{{ route('admin.holiday.action') }}" class="form-inline text-right" onsubmit="return confirm('Anda yakin untuk menerapkan yang dipilih')">
+			@can('create-holiday')
+			<a href="{{ route('admin.holiday.create') }}" class="btn btn-default">Buat Baru</a>
+			@endcan
+			<select class="form-control" name="action">
+				<option value="delete">Hapus</option>
+			</select>
+			<button type="submit" class="btn btn-success">Terapkan yang dipilih</button>
+		</form>
+		<table class="table table-striped table-bordered" id="datatable">
 			<thead>
 				<tr>
 					<th width="100" nowrap>
-						<label class="checkbox-inline"><input type="checkbox" data-target="check" class="check-all" id="check-all">Pilih Semua</label>
+						<label class="checkbox-inline"><input type="checkbox" data-target="check-index" class="check-all" id="check-all">Pilih Semua</label>
 					</th>
-					<th>No.</th>
+
 					<th>Nama</th>
 					<th>Tanggal</th>
 					<th>Tipe</th>
+
 					<th>Action</th>
 				</tr>
 			</thead>
-			<tbody>
-				@php $count=0; @endphp
-				@foreach($index as $list)
-				<tr>
-					<td class="a-center ">
-						<input type="checkbox" class="check" value="{{ $list->id }}" name="id[]" form="action">
-					</td>
-					<td>{{ ++$count }}</td>
-					<td>{{ $list->name }}</td>
-					<td>{{ date('d F Y', strtotime($list->date)) }}</td>
-					<td>{{ $list->type == 'libur' ? 'Libur' : 'Cuti Bersama' }}</td>
-					<td nowrap>
-						<a href="{{ route('admin.holiday.edit', ['id' => $list->id]) }}" class="btn btn-xs btn-primary"><i class="fa fa-pencil"></i></a>
-						<a href="{{ route('admin.holiday.delete', ['id' => $list->id]) }}" class="btn btn-xs btn-danger" onclick="return confirm('Hapus Data?')"><i class="fa fa-trash"></i></a>
-					</td>
-				</tr>
-				@endforeach
-			</tbody>
 		</table>
-
 	</div>
 	
 

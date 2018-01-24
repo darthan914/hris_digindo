@@ -18,14 +18,14 @@ class Employee extends Model
     	return $this->hasMany('App\EmployeeFamily', 'id_employee');
     }
 
-    public function bookContract()
+    public function contract()
     {
-        return $this->hasMany('App\BookContract', 'id_employee');
+        return $this->hasMany('App\Contract', 'id_employee');
     }
 
-    public function bookPayrollChange()
+    public function payroll()
     {
-        return $this->hasMany('App\BookPayrollChange', 'id_employee');
+        return $this->hasMany('App\Payroll', 'id_employee');
     }
 
     public function dayoff()
@@ -33,9 +33,9 @@ class Employee extends Model
         return $this->hasMany('App\Dayoff', 'id_employee');
     }
 
-    public function itemBorrowed()
+    public function borrow()
     {
-        return $this->hasMany('App\ItemBorrowed', 'id_employee');
+        return $this->hasMany('App\Borrow', 'id_employee');
     }
 
     public function leave()

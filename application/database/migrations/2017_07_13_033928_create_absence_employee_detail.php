@@ -16,8 +16,13 @@ class CreateAbsenceEmployeeDetail extends Migration
         Schema::create('absence_employee_detail', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('id_absence_employee');
+            $table->date('date');
+            $table->time('shift_in')->nullable();
+            $table->time('shift_out')->nullable();
             $table->time('check_in')->nullable();
             $table->time('check_out')->nullable();
+            $table->string('status')->comment('masuk, sakit, izin, cuti, alpa, pending');
+            $table->double('fine_additional', 12, 2)->nullable();
             $table->timestamps();
         });
     }

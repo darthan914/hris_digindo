@@ -46,9 +46,7 @@
 
 	<h1>Data Karyawan - Family Hubungan - Edit</h1>
 	<div class="x_panel">
-		<form class="form-horizontal form-label-left" action="{{ route('admin.employeeFamily.update', ['id' => $index->id]) }}" method="post" enctype="multipart/form-data">
-			<h2>Biodata Karyawan</h2>
-
+		<form class="form-horizontal form-label-left" action="{{ route('admin.employee.updateFamily', ['id' => $index->id]) }}" method="post" enctype="multipart/form-data">
 			<div class="form-group">
 				<label for="relation" class="control-label col-md-3 col-sm-3 col-xs-12">Hubungan <span class="required">*</span>
 				</label>

@@ -5,7 +5,20 @@
 @endsection
 
 @section('script')
-
+<script type="text/javascript">
+	$(function() {
+		$(".check-all").click(function(){
+			if ($(this).is(':checked'))
+			{
+				$('.' + $(this).attr('data-target')).prop('checked', true);
+			}
+			else
+			{
+				$('.' + $(this).attr('data-target')).prop('checked', false);
+			}
+		});
+	});
+</script>
 @endsection
 
 @section('content')
@@ -23,8 +36,8 @@
 						<li class="parsley-required">{{ $errors->first('name') }}</li>
 					</ul>
 				</div>
-				
 			</div>
+			
 			<div class="form-group">
 				<label for="username" class="control-label col-md-3 col-sm-3 col-xs-12">Username <span class="required">*</span>
 				</label>
@@ -35,6 +48,7 @@
 					</ul>
 				</div>
 			</div>
+
 			<div class="form-group">
 				<label for="email" class="control-label col-md-3 col-sm-3 col-xs-12">Email <span class="required">*</span>
 				</label>
@@ -45,6 +59,7 @@
 					</ul>
 				</div>
 			</div>
+
 			<div class="form-group">
 				<label for="password" class="control-label col-md-3 col-sm-3 col-xs-12">Password</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
@@ -54,22 +69,14 @@
 					</ul>
 				</div>
 			</div>
+
 			<div class="form-group">
-				<label for="password_confirmation" class="control-label col-md-3 col-sm-3 col-xs-12">Confirmation Password</label>
+				<label for="password_confirmation" class="control-label col-md-3 col-sm-3 col-xs-12">Konfirmasi Password</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
 					<input type="password" id="password_confirmation" name="password_confirmation" class="form-control">
 				</div>
 			</div>
-			<div class="form-group">
-				<label for="user_password" class="control-label col-md-3 col-sm-3 col-xs-12">Current User Password <span class="required">*if update password</span>
-				</label>
-				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="password" id="user_password" name="user_password" class="form-control {{$errors->first('user_password') != '' ? 'parsley-error' : ''}}">
-					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('user_password') }}</li>
-					</ul>
-				</div>
-			</div>
+
 			<div class="form-group">
 				<label for="avatar" class="control-label col-md-3 col-sm-3 col-xs-12">Avatar</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
@@ -84,7 +91,6 @@
 				</div>
 			</div>
 			
-			@if(Auth::user()->access == 0)
 			<div class="form-group">
 				<label for="active" class="control-label col-md-3 col-sm-3 col-xs-12">Status</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
@@ -97,20 +103,34 @@
 					</ul>
 				</div>
 			</div>
+
+			@foreach($key as $list)
 			<div class="form-group">
-				<label for="access" class="control-label col-md-3 col-sm-3 col-xs-12">Access</label>
+				<label class="control-label checkbox-inline col-md-3 col-sm-3 col-xs-12">
+					<input type="checkbox" data-target="group-{{ $list['id'] }}" class="check-all"> Access {{ $list['name'] }}
+				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<select id="access" name="access" class="form-control {{$errors->first('access') != '' ? 'parsley-error' : ''}}">
-						<option value="0" @if($index->access == 0) selected @endif>Semua</option>
-						<option value="1" @if($index->access == 1) selected @endif>Semua, Kecuali Buat User Dan Ubah User Lain</option>
-					</select>
+					@foreach($list['data'] as $list2)
+					<label class="checkbox-inline"><input type="checkbox" name="permission[]" class="group-{{ $list['id'] }}" value="{{ $list2['value'] }}" @if(in_array($list2['value'], old('permission', explode(', ', $index->permission)))) checked @endif>{{ $list2['name'] }}</label>
+					@endforeach
 					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('access') }}</li>
+						<li class="parsley-required">{{ $errors->first('permission') }}</li>
 					</ul>
 				</div>
 			</div>
-			@endif
+			@endforeach
 			
+
+			<div class="form-group">
+				<label for="password_user" class="control-label col-md-3 col-sm-3 col-xs-12">Password User <span class="required">*</span>
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<input type="password" id="password_user" name="password_user" class="form-control {{$errors->first('password_user') != '' ? 'parsley-error' : ''}}">
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('password_user') }}</li>
+					</ul>
+				</div>
+			</div>
 			
 
 			<div class="ln_solid"></div>

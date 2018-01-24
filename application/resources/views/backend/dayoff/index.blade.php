@@ -12,10 +12,84 @@
 <script src="{{ asset('backend/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js') }}"></script>
 <script type="text/javascript">
 	$(function() {
-		$('#datatable-buttons, #datatable-buttons2').DataTable({
-			"columnDefs": [
-				{ "orderable": false, "targets": 0 }
-			]
+		var table = $('#datatable').DataTable({
+			processing: true,
+			serverSide: true,
+			ajax: {
+				url: "{{ route('admin.dayoff.datatables') }}",
+				type: "post",
+				data: {
+					f_id_employee : $('*[name=f_id_employee]').val(),
+					f_year        : $('*[name=f_year]').val(),
+				},
+			},
+			columns: [
+				{data: 'check', orderable: false, searchable: false},
+
+				{data: 'name'},
+				{data: 'job_title'},
+				{data: 'shift'},
+
+				{data: 'date'},
+				{data: 'total_dayoff'},
+				{data: 'start_dayoff'},
+
+				{data: 'end_dayoff'},
+				{data: 'type'},
+				{data: 'note'},
+
+				{data: 'check_leader'},
+
+				{data: 'action', orderable: false, searchable: false, sClass: 'nowarp-cell'},
+			],
+			initComplete: function () {
+				this.api().columns().every(function () {
+					var column = this;
+					var input = document.createElement("input");
+					$(input).appendTo($(column.footer()).empty())
+					.on('keyup', function () {
+						column.search($(this).val(), false, false, true).draw();
+					});
+				});
+			},
+			scrollY: "400px",
+			// scrollX: true,
+		});
+
+		var tableRemain = $('#datatable-remain').DataTable({
+			processing: true,
+			serverSide: true,
+			ajax: {
+				url: "{{ route('admin.dayoff.datatablesRemain') }}",
+				type: "post",
+				data: {
+					f_year : $('*[name=f_year]').val(),
+				},
+			},
+			columns: [
+				{data: 'check', orderable: false, searchable: false},
+
+				{data: 'name'},
+				{data: 'dayoff_this_year'},
+				{data: 'dayoff_holiday'},
+
+				{data: 'dayoff_remain_last_year'},
+				{data: 'dayoff_remain'},
+
+				{data: 'action', orderable: false, searchable: false, sClass: 'nowarp-cell'},
+			],
+			initComplete: function () {
+				this.api().columns().every(function () {
+					var column = this;
+					var input = document.createElement("input");
+					$(input).appendTo($(column.footer()).empty())
+					.on('keyup', function () {
+						column.search($(this).val(), false, false, true).draw();
+					});
+				});
+			},
+			scrollY: "400px",
+			// scrollX: true,
 		});
 
 		$(".check-all").click(function(){
@@ -29,16 +103,109 @@
 			}
 		});
 
+		$('#datatable').on('click', '.delete-dayoff', function(){
+			$('.id_dayoff-ondelete').val($(this).data('id'));
+		});
+
+		$('#datatable').on('click', '.confirm-dayoff', function(){
+			$('.id_dayoff-onconfirm').val($(this).data('id'));
+		});
+
+		$('#datatable').on('click', '.cancel-dayoff', function(){
+			$('.id_dayoff-oncancel').val($(this).data('id'));
+		});
+
 	});
 </script>
 @endsection
 
+@section('css')
+<link href="{{ asset('backend/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css') }}" rel="stylesheet">
+<link href="{{ asset('backend/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css') }}" rel="stylesheet">
+<style type="text/css">
+	.nowarp-cell{
+		white-space: nowrap;
+	}
+</style>
+@endsection
+
 @section('content')
+
+	@can('delete-dayoff')
+	{{-- Delete Dayoff --}}
+	<div id="delete-dayoff" class="modal fade" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<form class="form-horizontal form-label-left" action="{{ route('admin.dayoff.delete') }}" method="post" enctype="multipart/form-data">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+						<h4 class="modal-title">Hapus Cuti?</h4>
+					</div>
+					<div class="modal-body">
+					</div>
+					<div class="modal-footer">
+						{{ csrf_field() }}
+						<input type="hidden" name="id" class="id_dayoff-ondelete" value="{{old('id')}}">
+						<button type="submit" class="btn btn-danger">Hapus</button>
+						<button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	@endcan
+
+	@can('confirm-dayoff')
+	{{-- Confirm Dayoff --}}
+	<div id="confirm-dayoff" class="modal fade" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<form class="form-horizontal form-label-left" action="{{ route('admin.dayoff.confirm') }}" method="post" enctype="multipart/form-data">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+						<h4 class="modal-title">Terima Permintaan Cuti?</h4>
+					</div>
+					<div class="modal-body">
+					</div>
+					<div class="modal-footer">
+						{{ csrf_field() }}
+						<input type="hidden" name="id" class="id_dayoff-onconfirm" value="{{old('id')}}">
+						<button type="submit" class="btn btn-success">Ya</button>
+						<button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div id="cancel-dayoff" class="modal fade" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<form class="form-horizontal form-label-left" action="{{ route('admin.dayoff.confirm') }}" method="post" enctype="multipart/form-data">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal">&times;</button>
+						<h4 class="modal-title">Batal Permintaan Cuti?</h4>
+					</div>
+					<div class="modal-body">
+					</div>
+					<div class="modal-footer">
+						{{ csrf_field() }}
+						<input type="hidden" name="id" class="id_dayoff-oncancel" value="{{old('id')}}">
+						<button type="submit" class="btn btn-warning">Ya</button>
+						<button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	@endcan
 
 	<h1>Cuti</h1>
 	<div class="x_panel" style="overflow: auto;">
 		<form method="post" id="action" action="{{ route('admin.dayoff.action') }}" class="form-inline text-right" onsubmit="return confirm('Anda yakin untuk menerapkan yang dipilih')">
+			@can('create-dayoff')
 			<a href="{{ route('admin.dayoff.create') }}" class="btn btn-default">Buat Baru</a>
+			@endcan
 			<select class="form-control" name="action">
 				<option value="delete">Hapus</option>
 			</select>
@@ -47,7 +214,7 @@
 
 		<ul class="nav nav-tabs">
 			<li @if($tab == 'index') class="active" @endif><a data-toggle="tab" href="#index">Semua</a></li>
-			<li @if($tab == 'leftDayoff') class="active" @endif><a data-toggle="tab" href="#leftDayoff">Sisa cuti karyawan</a></li>
+			<li @if($tab == 'remain') class="active" @endif><a data-toggle="tab" href="#remain">Sisa cuti karyawan</a></li>
 		</ul>
 
 		<div class="tab-content">
@@ -56,111 +223,76 @@
 					<select name="f_id_employee" class="form-control" onchange="this.form.submit()">
 						<option value="">-- Filter Karyawan --</option>
 						@foreach($employee as $list)
-						<option value="{{ $list->id }}" @if($f_id_employee == $list->id) selected @endif>{{ $list->name }}</option>
+						<option value="{{ $list->id }}" @if($request->f_id_employee == $list->id) selected @endif>{{ $list->name }}</option>
 						@endforeach
 					</select>
 					<select name="f_year" class="form-control" onchange="this.form.submit()">
 						<option value="">-- Filter Tahun --</option>
 						@foreach($year as $list)
-						<option value="{{ $list->year }}" @if($f_year == $list->year) selected @endif>{{ $list->year }}</option>
+						<option value="{{ $list->year }}" @if($request->f_year == $list->year) selected @endif>{{ $list->year }}</option>
 						@endforeach
 					</select>
 					<input type="hidden" name="tab" value="index">
 				</form>
-				<table class="table table-striped table-bordered" id="datatable-buttons">
+
+				<table class="table table-striped table-bordered" id="datatable">
 					<thead>
 						<tr>
 							<th width="100" nowrap>
-								<label class="checkbox-inline"><input type="checkbox" data-target="check" class="check-all" id="check-all">Pilih Semua</label>
+								<label class="checkbox-inline"><input type="checkbox" data-target="check-index" class="check-all" id="check-all">Pilih Semua</label>
 							</th>
-							<th>No.</th>
+
 							<th>Nama</th>
 							<th>Posisi</th>
 							<th>Shift</th>
+
 							<th>Tanggal Permintaan</th>
 							<th>Total Cuti</th>
 							<th>Dari Tanggal</th>
+
 							<th>Ke Tanggal</th>
 							<th>Tipe</th>
 							<th>Catatan</th>
+
+							<th>Konfirmasi</th>
+
 							<th>Action</th>
 						</tr>
 					</thead>
-					<tbody>
-						@php $count=0; @endphp
-						@foreach($index as $list)
-						<tr>
-							<td class="a-center ">
-								<input type="checkbox" class="check" value="{{ $list->id }}" name="id[]" form="action">
-							</td>
-							<td>{{ ++$count }}</td>
-							<td>{{ $list->name }}</td>
-							<td>{{ $list->position }}</td>
-							<td><a href="{{ route('admin.shift.edit', ['id' => $list->id_shift]) }}">{{ $list->shift }}</a></td>
-							<td>{{ date('d F Y', strtotime($list->date)) }}</td>
-							<td>{{ $list->total_dayoff }}</td>
-							<td>{{ date('d F Y', strtotime($list->start_dayoff)) }}</td>
-							<td>{{ date('d F Y', strtotime($list->end_dayoff)) }}</td>
-							<td>{{ $list->type }}</td>
-							<td>{{ $list->note }}</td>
-							<td nowrap>
-								<a href="{{ route('admin.dayoff.edit', ['id' => $list->id]) }}" class="btn btn-xs btn-primary"><i class="fa fa-pencil"></i></a>
-								<a href="{{ route('admin.dayoff.delete', ['id' => $list->id]) }}" class="btn btn-xs btn-danger" onclick="return confirm('Hapus Data?')"><i class="fa fa-trash"></i></a>
-							</td>
-						</tr>
-						@endforeach
-					</tbody>
 				</table>
 			</div>
-			<div id="leftDayoff" class="tab-pane fade @if($tab == 'leftDayoff') in active @endif">
+
+			<div id="remain" class="tab-pane fade @if($tab == 'remain') in active @endif">
 				<form method="get" id="filter-index" class="form-inline text-right">
 					<select name="f_year" class="form-control" onchange="this.form.submit()">
-						<option value="">-- Filter Tahun --</option>
+						<option value="">-- Tahun Ini --</option>
 						@foreach($year as $list)
-						<option value="{{ $list->year }}" @if($f_year == $list->year) selected @endif>{{ $list->year }}</option>
+						<option value="{{ $list->year }}" @if($request->f_year == $list->year) selected @endif>{{ $list->year }}</option>
 						@endforeach
 					</select>
-					<input type="hidden" name="tab" value="leftDayoff">
+					<input type="hidden" name="tab" value="remain">
 				</form>
-				<p>Total Cuti Bersama {{ $f_year ? $f_year : date('Y') }} : {{ $totalDayoff->first()->total_holiday }}</p>
-				<table class="table table-striped table-bordered" id="datatable-buttons2">
+
+				{{-- <p>Total Cuti Bersama {{ $request->f_year ? $request->f_year : date('Y') }} : {{ $totalDayoff->first()->total_holiday }}</p> --}}
+
+				<table class="table table-striped table-bordered" id="datatable-remain">
 					<thead>
 						<tr>
 							<th width="100" nowrap>
-								<label class="checkbox-inline"><input type="checkbox" data-target="check" class="check-all" id="check-all">Pilih Semua</label>
+								<label class="checkbox-inline"><input type="checkbox" data-target="check-remain" class="check-all" id="check-all">Pilih Semua</label>
 							</th>
-							<th>No.</th>
+
 							<th>Nama</th>
 							<th>Total Cuti</th>
 							<th>Libur Cuti</th>
-							<!-- <th>Terakhir total Cuti</th> -->
-							<!-- <th>Terakhir Libur Cuti</th> -->
+
 							<th>Utang Cuti</th>
 							<th>Sisa Cuti</th>
+
 							<th>Action</th>
 						</tr>
 					</thead>
-					<tbody>
-						@php $count=0; @endphp
-						@foreach($totalDayoff as $list)
-						<tr>
-							<td class="a-center ">
-								<input type="checkbox" class="check" value="{{ $list->id }}" name="id[]" form="action">
-							</td>
-							<td>{{ ++$count }}</td>
-							<td>{{ $list->name }}</td>
-							<td>{{ $col1 = $list->dayoff()->whereYear('start_dayoff', $f_year ? $f_year : date('Y'))->sum('total_dayoff') }}</td>
-							<td>{{ $holidayDayoff }}</td>
-							<!-- <td>{{ $col2 = $list->dayoff()->whereYear('start_dayoff', $f_year ? $f_year-1 : date('Y')-1)->sum('total_dayoff') }}</td> -->
-							<!-- <td>{{ $lastHolidayDayoff }}</td> -->
-							<td>{{ $col3 = (12 - $col2 - $lastHolidayDayoff) < 0 ? (12 - $col2 - $lastHolidayDayoff) : 0 }}</td>
-							<td>{{ 12 - $col1 - $holidayDayoff + $col3 }}</td>
-							<td nowrap>
-								<a href="{{ route('admin.dayoff', ['f_id_employee' => $list->id, 'f_year' => $f_year ? $f_year : date('Y')]) }}" class="btn btn-xs btn-primary"><i class="fa fa-eye"></i></a>
-							</td>
-						</tr>
-						@endforeach
-					</tbody>
+					
 				</table>
 			</div>
 		</div>

@@ -17,10 +17,8 @@ class CreateShift extends Migration
             $table->increments('id');
             $table->string('code')->unique();
             $table->string('name');
-            $table->time('shift_in');
-            $table->time('shift_out');
             $table->boolean('work_in_holiday');
-            $table->integer('late')->default(0)->comment('dihitung menit, bila telat');
+            $table->integer('day_per_month');
             $table->timestamps();
         });
     }

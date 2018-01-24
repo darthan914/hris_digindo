@@ -29,15 +29,20 @@
 	}
 
 	$(function() {
-	    $('input[name="date_join"], input[name="birthday"], input[name="date_contract"], input[name="end_contract"], input[name="update_payroll"]').daterangepicker({
-	    	locale: {
-		      format: 'DD MMMM YYYY'
+		var selector = 'input[name="date_join"], input[name="birthday"], input[name="start_date_contract"], input[name="end_date_contract"], input[name="update_payroll"], input[name=date_resign]';
+	    $(selector).daterangepicker({
+		    autoUpdateInput: false,
+		    locale: {
+		        cancelLabel: 'Clear'
 		    },
-	        singleDatePicker: true,
-	        showDropdowns: true
-	    });
+		    singleDatePicker: true
+		});
 
-	    $('select[name="id_job_title"]').select2();
+		$(selector).on('apply.daterangepicker', function(ev, picker) {
+		    $(this).val(picker.startDate.format('DD MMMM YYYY'));
+		});
+
+	    $('select[name="leader"], select[name="id_shift"]').select2();
 	});
 </script>
 @endsection
@@ -84,18 +89,29 @@
 			</div>
 
 			<div class="form-group">
-				<label for="region" class="control-label col-md-3 col-sm-3 col-xs-12">Agama <span class="required">*</span>
+				<label for="religion" class="control-label col-md-3 col-sm-3 col-xs-12">Agama <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<label class="radio-inline"><input type="radio" id="region-islam" name="region" value="islam" @if(old('region') != '' && old('region') == 'islam') checked @endif>Islam</label> 
-					<label class="radio-inline"><input type="radio" id="region-kristen" name="region" value="kristen" @if(old('region') != '' && old('region') == 'kristen') checked @endif>Kristen</label> 
-					<label class="radio-inline"><input type="radio" id="region-khatolik" name="region" value="khatolik" @if(old('region') != '' && old('region') == 'khatolik') checked @endif>Khatolik</label> 
-					<label class="radio-inline"><input type="radio" id="region-buddha" name="region" value="buddha" @if(old('region') != '' && old('region') == 'buddha') checked @endif>Buddha</label> 
-					<label class="radio-inline"><input type="radio" id="region-hindu" name="region" value="hindu" @if(old('region') != '' && old('region') == 'hindu') checked @endif>Hindu</label> 
-					<label class="radio-inline"><input type="radio" id="region-other" name="region" value="other" @if(old('region') != '' && old('region') == 'other') checked @endif>Other</label>
+					<label class="radio-inline"><input type="radio" id="religion-islam" name="religion" value="islam" @if(old('religion') != '' && old('religion') == 'islam') checked @endif>Islam</label> 
+					<label class="radio-inline"><input type="radio" id="religion-kristen" name="religion" value="kristen" @if(old('religion') != '' && old('religion') == 'kristen') checked @endif>Kristen</label> 
+					<label class="radio-inline"><input type="radio" id="religion-khatolik" name="religion" value="khatolik" @if(old('religion') != '' && old('religion') == 'khatolik') checked @endif>Khatolik</label> 
+					<label class="radio-inline"><input type="radio" id="religion-buddha" name="religion" value="buddha" @if(old('religion') != '' && old('religion') == 'buddha') checked @endif>Buddha</label> 
+					<label class="radio-inline"><input type="radio" id="religion-hindu" name="religion" value="hindu" @if(old('religion') != '' && old('religion') == 'hindu') checked @endif>Hindu</label> 
+					<label class="radio-inline"><input type="radio" id="religion-other" name="religion" value="other" @if(old('religion') != '' && old('religion') == 'other') checked @endif>Other</label>
 					
 					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('region') }}</li>
+						<li class="parsley-required">{{ $errors->first('religion') }}</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="no_ktp" class="control-label col-md-3 col-sm-3 col-xs-12">No KTP <span class="required">*</span>
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<input type="text" id="no_ktp" name="no_ktp" class="form-control {{$errors->first('no_ktp') != '' ? 'parsley-error' : ''}}" value="{{ old('no_ktp') }}">
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('no_ktp') }}</li>
 					</ul>
 				</div>
 			</div>
@@ -109,17 +125,6 @@
 					
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('status') }}</li>
-					</ul>
-				</div>
-			</div>
-
-			<div class="form-group">
-				<label for="no_ktp" class="control-label col-md-3 col-sm-3 col-xs-12">No KTP <span class="required">*</span>
-				</label>
-				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="no_ktp" name="no_ktp" class="form-control {{$errors->first('no_ktp') != '' ? 'parsley-error' : ''}}" value="{{ old('no_ktp') }}">
-					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('no_ktp') }}</li>
 					</ul>
 				</div>
 			</div>
@@ -158,6 +163,28 @@
 			</div>
 
 			<div class="form-group">
+				<label for="npwp_address" class="control-label col-md-3 col-sm-3 col-xs-12">Alamat NPWP
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<textarea type="text" id="npwp_address" name="npwp_address" class="form-control {{$errors->first('npwp_address') != '' ? 'parsley-error' : ''}}">{{ old('npwp_address') }}</textarea>
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('npwp_address') }}</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="npwp_status" class="control-label col-md-3 col-sm-3 col-xs-12">Status NPWP
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<input type="text" id="npwp_status" name="npwp_status" class="form-control {{$errors->first('npwp_status') != '' ? 'parsley-error' : ''}}" value="{{ old('npwp_status') }}">
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('npwp_status') }}</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="form-group">
 				<label for="phone" class="control-label col-md-3 col-sm-3 col-xs-12">Nomor Telepon <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
@@ -169,7 +196,19 @@
 			</div>
 
 			<div class="ln_solid"></div>
+			
 			<h2>Data Karyawan</h2>
+
+			<div class="form-group">
+				<label for="date_join" class="control-label col-md-3 col-sm-3 col-xs-12">Tanggal Bergabung <span class="required">*</span>
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<input type="text" id="date_join" name="date_join" class="form-control {{$errors->first('date_join') != '' ? 'parsley-error' : ''}}" value="{{ old('date_join') }}">
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('date_join') }}</li>
+					</ul>
+				</div>
+			</div>
 			
 			<div class="form-group">
 				<label for="nik" class="control-label col-md-3 col-sm-3 col-xs-12">NIK <span class="required">*</span>
@@ -183,17 +222,12 @@
 			</div>
 
 			<div class="form-group">
-				<label for="id_job_title" class="control-label col-md-3 col-sm-3 col-xs-12">Posisi <span class="required">*</span>
+				<label for="job_title" class="control-label col-md-3 col-sm-3 col-xs-12">Posisi <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<select id="id_job_title" name="id_job_title" class="form-control {{$errors->first('id_job_title') != '' ? 'parsley-error' : ''}}">
-						<option value="">-- Select Posisi --</option>
-						@foreach($jobTitle as $list)
-						<option value="{{ $list->id }}" @if(old('id_job_title') != '' && old('id_job_title') == $list->id) selected @endif>{{ $list->name }}</option>
-						@endforeach
-					</select>
+					<input type="text" id="job_title" name="job_title" class="form-control {{$errors->first('job_title') != '' ? 'parsley-error' : ''}}" value="{{ old('job_title') }}">
 					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('id_job_title') }}</li>
+						<li class="parsley-required">{{ $errors->first('job_title') }}</li>
 					</ul>
 				</div>
 			</div>
@@ -224,8 +258,8 @@
 				<label for="level" class="control-label col-md-3 col-sm-3 col-xs-12">Sebagai <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<label class="radio-inline"><input type="radio" name="level" value="staff" @if(old('level') != '' && old('level') == 'staff') checked @endif>Karyawan</label> 
-					<label class="radio-inline"><input type="radio" name="level" value="leader" @if(old('level') != '' && old('level') == 'leader') checked @endif>Atasan</label> 
+					<label class="radio-inline"><input type="radio" name="level" value="staff" @if(old('level') == 'staff') checked @endif>Karyawan</label> 
+					<label class="radio-inline"><input type="radio" name="level" value="leader" @if(old('level') == 'leader') checked @endif>Atasan</label> 
 					
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('level') }}</li>
@@ -234,44 +268,34 @@
 			</div>
 
 			<div class="form-group">
-				<label for="leader" class="control-label col-md-3 col-sm-3 col-xs-12">Atasan (Bila sebagai kepala karyawan tidak perlu dipilh)
+				<label for="id_leader" class="control-label col-md-3 col-sm-3 col-xs-12">Atasan (Bila sebagai kepala karyawan tidak perlu dipilh)
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<select id="leader" name="leader" class="form-control {{$errors->first('leader') != '' ? 'parsley-error' : ''}}">
+					<select id="id_leader" name="id_leader" class="form-control {{$errors->first('id_leader') != '' ? 'parsley-error' : ''}}">
 						<option value="0">-- Pilih Atasan --</option>
 						@foreach($headEmployee as $list)
-						<option value="{{ $list->id }}" @if(old('leader') != '' && old('leader') == $list->id) selected @endif>{{ $list->name }}</option>
+						<option value="{{ $list->id }}" @if(old('id_leader') == $list->id) selected @endif>{{ $list->name }}</option>
 						@endforeach
 					</select>
 					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('leader') }}</li>
+						<li class="parsley-required">{{ $errors->first('id_leader') }}</li>
 					</ul>
 				</div>
 			</div>
 			
 			<div class="form-group">
-				<label for="date_join" class="control-label col-md-3 col-sm-3 col-xs-12">Tanggal Bergabung <span class="required">*</span>
+				<label for="id_absence_machine" class="control-label col-md-3 col-sm-3 col-xs-12">No ID Absen
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="date_join" name="date_join" class="form-control {{$errors->first('date_join') != '' ? 'parsley-error' : ''}}" value="{{ old('date_join') }}">
+					<input type="text" id="id_absence_machine" name="id_absence_machine" class="form-control {{$errors->first('id_absence_machine') != '' ? 'parsley-error' : ''}}" value="{{ old('id_absence_machine') }}">
 					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('date_join') }}</li>
-					</ul>
-				</div>
-			</div>
-
-			<div class="form-group">
-				<label for="id_machine" class="control-label col-md-3 col-sm-3 col-xs-12">No ID Absen
-				</label>
-				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="id_machine" name="id_machine" class="form-control {{$errors->first('id_machine') != '' ? 'parsley-error' : ''}}" value="{{ old('id_machine') }}">
-					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('id_machine') }}</li>
+						<li class="parsley-required">{{ $errors->first('id_absence_machine') }}</li>
 					</ul>
 				</div>
 			</div>
 
 			<div class="ln_solid"></div>
+			
 			<h2>Kontrak Karyawan</h2>
 
 			<div class="form-group">
@@ -293,23 +317,61 @@
 			</div>
 
 			<div class="form-group">
-				<label for="date_contract" class="control-label col-md-3 col-sm-3 col-xs-12">Tanggal Mulai Kontrak <span class="required">*</span>
+				<label for="start_date_contract" class="control-label col-md-3 col-sm-3 col-xs-12">Tanggal Mulai Kontrak <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="date_contract" name="date_contract" class="form-control {{$errors->first('date_contract') != '' ? 'parsley-error' : ''}}" value="{{ old('date_contract') }}">
+					<input type="text" id="start_date_contract" name="start_date_contract" class="form-control {{$errors->first('start_date_contract') != '' ? 'parsley-error' : ''}}" value="{{ old('start_date_contract') }}">
 					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('date_contract') }}</li>
+						<li class="parsley-required">{{ $errors->first('start_date_contract') }}</li>
 					</ul>
 				</div>
 			</div>
 
 			<div class="form-group">
-				<label for="end_contract" class="control-label col-md-3 col-sm-3 col-xs-12">Tanggal Akhir Kontrak <span class="required">*</span>
+				<label for="end_date_contract" class="control-label col-md-3 col-sm-3 col-xs-12">Tanggal Akhir Kontrak <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="end_contract" name="end_contract" class="form-control {{$errors->first('end_contract') != '' ? 'parsley-error' : ''}}" value="{{ old('end_contract') }}">
+					<input type="text" id="end_date_contract" name="end_date_contract" class="form-control {{$errors->first('end_date_contract') != '' ? 'parsley-error' : ''}}" value="{{ old('end_date_contract') }}">
 					<ul class="parsley-errors-list filled">
-						<li class="parsley-required">{{ $errors->first('end_contract') }}</li>
+						<li class="parsley-required">{{ $errors->first('end_date_contract') }}</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="id_shift" class="control-label col-md-3 col-sm-3 col-xs-12">Shift
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<select id="id_shift" name="id_shift" class="form-control {{$errors->first('id_shift') != '' ? 'parsley-error' : ''}}">
+						<option value="0">-- Pilih Shift --</option>
+						@foreach($shift as $list)
+						<option value="{{ $list->id }}" @if(old('id_shift')== $list->id) selected @endif>{{ $list->name }}</option>
+						@endforeach
+					</select>
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('id_shift') }}</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="need_book_overtime" class="control-label col-md-3 col-sm-3 col-xs-12">Butuh Surat Lembur
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<label class="checkbox-inline"><input type="checkbox" id="need_book_overtime" name="need_book_overtime" value="1" @if(old('need_book_overtime') == '1') checked @endif>Ya</label> 
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('need_book_overtime') }}</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="min_overtime" class="control-label col-md-3 col-sm-3 col-xs-12">Minimum Lembur (Per Menit)
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<input type="text" id="min_overtime" name="min_overtime" class="form-control {{$errors->first('min_overtime') != '' ? 'parsley-error' : ''}}" value="{{ old('min_overtime', 15) }}">
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('min_overtime') }}</li>
 					</ul>
 				</div>
 			</div>
@@ -325,14 +387,27 @@
 				</div>
 			</div>
 
+			<div class="form-group">
+				<label for="status_guarantee" class="control-label col-md-3 col-sm-3 col-xs-12">Status Jaminan <span class="required">*</span>
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<label class="checkbox-inline"><input type="checkbox" id="status_guarantee" name="status_guarantee" value="1" @if(old('status_guarantee') == '1') checked @endif>Disimpan</label> 
+
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('status_guarantee') }}</li>
+					</ul>
+				</div>
+			</div>
+
 			<div class="ln_solid"></div>
+			
 			<h2>Gaji Karyawan</h2>
 
 			<div class="form-group">
 				<label for="gaji_pokok" class="control-label col-md-3 col-sm-3 col-xs-12">Gaji Pokok <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="gaji_pokok" name="gaji_pokok" class="form-control {{$errors->first('gaji_pokok') != '' ? 'parsley-error' : ''}}" value="{{ old('gaji_pokok') }}">
+					<input type="text" id="gaji_pokok" name="gaji_pokok" class="form-control {{$errors->first('gaji_pokok') != '' ? 'parsley-error' : ''}}" value="{{ old('gaji_pokok',0) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('gaji_pokok') }}</li>
 					</ul>
@@ -343,7 +418,7 @@
 				<label for="tunjangan" class="control-label col-md-3 col-sm-3 col-xs-12">Tunjangan
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="tunjangan" name="tunjangan" class="form-control {{$errors->first('tunjangan') != '' ? 'parsley-error' : ''}}" value="{{ old('tunjangan') }}">
+					<input type="text" id="tunjangan" name="tunjangan" class="form-control {{$errors->first('tunjangan') != '' ? 'parsley-error' : ''}}" value="{{ old('tunjangan',0) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('tunjangan') }}</li>
 					</ul>
@@ -354,7 +429,7 @@
 				<label for="perawatan_motor" class="control-label col-md-3 col-sm-3 col-xs-12">Perawatan Motor
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="perawatan_motor" name="perawatan_motor" class="form-control {{$errors->first('perawatan_motor') != '' ? 'parsley-error' : ''}}" value="{{ old('perawatan_motor') }}">
+					<input type="text" id="perawatan_motor" name="perawatan_motor" class="form-control {{$errors->first('perawatan_motor') != '' ? 'parsley-error' : ''}}" value="{{ old('perawatan_motor',0) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('perawatan_motor') }}</li>
 					</ul>
@@ -365,7 +440,7 @@
 				<label for="uang_makan" class="control-label col-md-3 col-sm-3 col-xs-12">Uang Makan
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="uang_makan" name="uang_makan" class="form-control {{$errors->first('uang_makan') != '' ? 'parsley-error' : ''}}" value="{{ old('uang_makan') }}">
+					<input type="text" id="uang_makan" name="uang_makan" class="form-control {{$errors->first('uang_makan') != '' ? 'parsley-error' : ''}}" value="{{ old('uang_makan',0) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('uang_makan') }}</li>
 					</ul>
@@ -376,7 +451,7 @@
 				<label for="transport" class="control-label col-md-3 col-sm-3 col-xs-12">Transport
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="transport" name="transport" class="form-control {{$errors->first('transport') != '' ? 'parsley-error' : ''}}" value="{{ old('transport') }}">
+					<input type="text" id="transport" name="transport" class="form-control {{$errors->first('transport') != '' ? 'parsley-error' : ''}}" value="{{ old('transport',0) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('transport') }}</li>
 					</ul>
@@ -387,7 +462,7 @@
 				<label for="bpjs_kesehatan" class="control-label col-md-3 col-sm-3 col-xs-12">BPJS Kesehatan
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="bpjs_kesehatan" name="bpjs_kesehatan" class="form-control {{$errors->first('bpjs_kesehatan') != '' ? 'parsley-error' : ''}}" value="{{ old('bpjs_kesehatan') }}">
+					<input type="text" id="bpjs_kesehatan" name="bpjs_kesehatan" class="form-control {{$errors->first('bpjs_kesehatan') != '' ? 'parsley-error' : ''}}" value="{{ old('bpjs_kesehatan',0) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('bpjs_kesehatan') }}</li>
 					</ul>
@@ -398,7 +473,7 @@
 				<label for="bpjs_ketenagakerjaan" class="control-label col-md-3 col-sm-3 col-xs-12">BPJS Ketenagakerjaan
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="bpjs_ketenagakerjaan" name="bpjs_ketenagakerjaan" class="form-control {{$errors->first('bpjs_ketenagakerjaan') != '' ? 'parsley-error' : ''}}" value="{{ old('bpjs_ketenagakerjaan') }}">
+					<input type="text" id="bpjs_ketenagakerjaan" name="bpjs_ketenagakerjaan" class="form-control {{$errors->first('bpjs_ketenagakerjaan') != '' ? 'parsley-error' : ''}}" value="{{ old('bpjs_ketenagakerjaan',0) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('bpjs_ketenagakerjaan') }}</li>
 					</ul>
@@ -409,9 +484,20 @@
 				<label for="uang_telat" class="control-label col-md-3 col-sm-3 col-xs-12">Uang Telat <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="uang_telat" name="uang_telat" class="form-control {{$errors->first('uang_telat') != '' ? 'parsley-error' : ''}}" value="{{ old('uang_telat') }}">
+					<input type="text" id="uang_telat" name="uang_telat" class="form-control {{$errors->first('uang_telat') != '' ? 'parsley-error' : ''}}" value="{{ old('uang_telat',0) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('uang_telat') }}</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="uang_telat_permenit" class="control-label col-md-3 col-sm-3 col-xs-12">Kelipatan Uang Telat (Menit)<span class="required">*</span>
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<input type="text" id="uang_telat_permenit" name="uang_telat_permenit" class="form-control {{$errors->first('uang_telat_permenit') != '' ? 'parsley-error' : ''}}" value="{{ old('uang_telat_permenit',15) }}">
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('uang_telat_permenit') }}</li>
 					</ul>
 				</div>
 			</div>
@@ -420,7 +506,7 @@
 				<label for="uang_lembur" class="control-label col-md-3 col-sm-3 col-xs-12">Uang Lembur <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="uang_lembur" name="uang_lembur" class="form-control {{$errors->first('uang_lembur') != '' ? 'parsley-error' : ''}}" value="{{ old('uang_lembur') }}">
+					<input type="text" id="uang_lembur" name="uang_lembur" class="form-control {{$errors->first('uang_lembur') != '' ? 'parsley-error' : ''}}" value="{{ old('uang_lembur',0) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('uang_lembur') }}</li>
 					</ul>
@@ -428,10 +514,21 @@
 			</div>
 
 			<div class="form-group">
-				<label for="pph" class="control-label col-md-3 col-sm-3 col-xs-12">PPH
+				<label for="uang_lembur_permenit" class="control-label col-md-3 col-sm-3 col-xs-12">Kelipatan Uang Lembur (Menit)<span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
-					<input type="text" id="pph" name="pph" class="form-control {{$errors->first('pph') != '' ? 'parsley-error' : ''}}" value="{{ old('pph') }}">
+					<input type="text" id="uang_lembur_permenit" name="uang_lembur_permenit" class="form-control {{$errors->first('uang_lembur_permenit') != '' ? 'parsley-error' : ''}}" value="{{ old('uang_lembur_permenit',15) }}">
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('uang_lembur_permenit') }}</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="pph" class="control-label col-md-3 col-sm-3 col-xs-12">PPh
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<input type="text" id="pph" name="pph" class="form-control {{$errors->first('pph') != '' ? 'parsley-error' : ''}}" value="{{ old('pph',0) }}">
 					<ul class="parsley-errors-list filled">
 						<li class="parsley-required">{{ $errors->first('pph') }}</li>
 					</ul>
@@ -450,6 +547,7 @@
 			</div>
 
 			<div class="ln_solid"></div>
+			
 			<h2>Hasil Test Karyawan</h2>
 
 			<div class="form-group">
@@ -486,6 +584,7 @@
 			</div>
 
 			<div class="ln_solid"></div>
+			
 			<h2>Emergency</h2>
 
 			<div class="form-group">
@@ -498,8 +597,9 @@
 					</ul>
 				</div>
 			</div>
+			
 			<div class="form-group">
-				<label for="emergency_phone" class="control-label col-md-3 col-sm-3 col-xs-12">Phone
+				<label for="emergency_phone" class="control-label col-md-3 col-sm-3 col-xs-12">Telepon
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
 					<input type="text" id="emergency_phone" name="emergency_phone" class="form-control {{$errors->first('emergency_phone') != '' ? 'parsley-error' : ''}}" value="{{ old('emergency_phone') }}">
@@ -508,6 +608,7 @@
 					</ul>
 				</div>
 			</div>
+			
 			<div class="form-group">
 				<label for="emergency_relation" class="control-label col-md-3 col-sm-3 col-xs-12">Hubungan
 				</label>
@@ -520,6 +621,33 @@
 			</div>
 
 			<div class="ln_solid"></div>
+			
+			<h2>Resign</h2>
+			
+			<div class="form-group">
+				<label for="status_resign" class="control-label col-md-3 col-sm-3 col-xs-12">Status Resign
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<label class="checkbox-inline"><input type="checkbox" id="status_resign" name="status_resign" value="1" @if(old('status_resign') == '1') checked @endif>Resign</label> 
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('status_resign') }}</li>
+					</ul>
+				</div>
+			</div>
+			
+			<div class="form-group">
+				<label for="date_resign" class="control-label col-md-3 col-sm-3 col-xs-12">Tanggal Resign
+				</label>
+				<div class="col-md-9 col-sm-9 col-xs-12">
+					<input type="text" id="date_resign" name="date_resign" class="form-control {{$errors->first('date_resign') != '' ? 'parsley-error' : ''}}" value="{{ old('date_resign') }}">
+					<ul class="parsley-errors-list filled">
+						<li class="parsley-required">{{ $errors->first('date_resign') }}</li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="ln_solid"></div>
+
 			<div class="form-group">
 				<div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
 					{{ csrf_field() }}

@@ -15,11 +15,11 @@ class CreateEmployeeFamily extends Migration
     {
         Schema::create('employee_family', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('id_employee');
+            $table->integer('id_employee')->comment('relasi dengan table employee column id');
             $table->string('relation')->comment('ayah, ibu, saudara, suami, istri, anak');
             $table->string('name');
             $table->integer('age')->nullable();
-            $table->string('school')->nullable()->comment('sd, smp, sma, smk, dll');
+            $table->string('school')->nullable();
             $table->string('job')->nullable();
             $table->timestamps();
         });

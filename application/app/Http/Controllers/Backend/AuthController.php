@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backend;
 
 use App\User;
+use App\Models\Role;
 use Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,6 +30,28 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        $role = Role::firstOrCreate(
+            ['id' => 1],
+            [
+                'name'       => 'Administrator',
+                'code'       => 'admin',
+                'active'     => 1,
+                'permission' => 'config, all-user, list-user, create-user, edit-user, delete-user, active-user, access-user, leader-user, impersonate-user, list-role, create-role, edit-role, delete-role, active-role',
+            ]
+        );
+
+        $user = User::firstOrCreate(
+            ['id' => 1], 
+            [
+                'name'     => 'Administrator',
+                'username' => 'admin',
+                'email'    => 'admin@digindo.co.id',
+                'password' => bcrypt('digindo123'),
+                'active'   => 1,
+                'id_role'  => 1,
+            ]
+        );
+
         if (Auth::attempt(['username' => $request->username, 'password' => $request->password, 'active' => 1])) {
             return redirect()->route('admin.home');
         } else {
@@ -70,27 +93,6 @@ class AuthController extends Controller
     public function resetPassword($token)
     {
         return view('backend.auth.reset');
-    }
-
-    public function formRegister()
-    {
-        $check = User::where('username', 'admin')->count();
-
-        if($check == 0)
-        {
-            $users = new User;
-
-            $users->username = 'admin';
-            $users->email    = 'admin@digindo.co.id';
-            $users->password = bcrypt('digindo123');
-            $users->name     = 'admin';
-            $users->active   = 1;
-
-            $users->save();
-        }
-        return redirect()->route('admin');
-
-        // return view('backend.auth.register');
     }
 
     public function register(Request $request)

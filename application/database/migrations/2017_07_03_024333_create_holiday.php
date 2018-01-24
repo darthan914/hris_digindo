@@ -16,7 +16,7 @@ class CreateHoliday extends Migration
         Schema::create('holiday', function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
-            $table->string('date');
+            $table->date('date');
             $table->string('type')->comment('libur, cuti');
             $table->timestamps();
         });

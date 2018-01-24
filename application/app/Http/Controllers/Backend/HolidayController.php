@@ -8,7 +8,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Session;
+use Datatables;
 
 class HolidayController extends Controller
 {
@@ -19,27 +21,64 @@ class HolidayController extends Controller
 
     public function index(Request $request)
 	{
-		$f_year = 0;
-    	if(isset($request->f_year))
-    	{
-    		$f_year = $request->f_year;
-    	}
-
     	$year = Holiday::groupBy(DB::raw('YEAR(date)'))->select(DB::raw('YEAR(date) as year'))->get();
 
-		$index = Holiday::orderBy('date', 'ASC');
-		if($f_year != 0)
+    	return view('backend.holiday.index')->with(compact('request', 'year'));
+	}
+
+    public function datatables(Request $request)
+    {
+        $f_year = $this->filter($request->f_year);
+
+        $index = Holiday::orderBy('date', 'ASC');
+        if($f_year != '')
         {
-        	$index = $index->whereYear('date', $f_year);
+            $index = $index->whereYear('date', $f_year);
         }
         $index = $index->get();
 
-    	return view('backend.holiday.index')->with(compact('index', 'year', 'f_year'));
-	}
+        $datatables = Datatables::of($index);
+
+        $datatables->addColumn('action', function ($index) {
+            $html = '';
+
+            if(Auth::user()->can('edit-holiday'))
+            {
+                $html .= '
+                    <a href="' . route('admin.holiday.edit', ['id' => $index->id]) . '" class="btn btn-xs btn-warning"><i class="fa fa-pencil"></i></a>
+                ';
+            }
+
+            if(Auth::user()->can('delete-holiday'))
+            {
+                $html .= '
+                    <button class="btn btn-xs btn-danger delete-holiday" data-toggle="modal" data-target="#delete-holiday" data-id="'.$index->id.'"><i class="fa fa-trash"></i></button>
+                ';
+            }
+
+            return $html;
+        });
+
+        $datatables->editColumn('date', function ($index) {
+            return date('d/m/Y', strtotime($index->date));
+        });
+
+        $datatables->addColumn('check', function ($index) {
+            $html = '';
+
+            $html .= '
+                <input type="checkbox" class="check" value="' . $index->id . '" name="id[]" form="action">
+            ';
+
+            return $html;
+        });
+
+        $datatables = $datatables->make(true);
+        return $datatables;
+    }
 
 	public function create()
     {
-
     	return view('backend.holiday.create');
     }
 
@@ -90,9 +129,9 @@ class HolidayController extends Controller
     	return redirect()->route('admin.holiday');
     }
 
-    public function delete($id)
+    public function delete(Request $request)
     {
-    	Holiday::destroy($id);
+    	Holiday::destroy($request->id);
 
         Session::flash('success', 'Data Has Been Deleted');
     	return redirect()->route('admin.holiday');

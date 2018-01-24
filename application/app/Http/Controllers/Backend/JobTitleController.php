@@ -22,10 +22,49 @@ class JobTitleController extends Controller
 
     public function index()
 	{
-		$index = JobTitle::all();
-
-    	return view('backend.jobTitle.index')->with(compact('index'));
+    	return view('backend.jobTitle.index');
 	}
+
+    public function datatables(Request $request)
+    {
+        $index = JobTitle::select('*');
+
+        $index = $index->get();
+
+        $datatables = Datatables::of($index);
+
+        $datatables->addColumn('action', function ($index) {
+            $html = '';
+
+            if(Auth::user()->can('edit-jobTitle'))
+            {
+                $html .= '
+                
+                    <a href="' . route('admin.jobTitle.edit', ['id' => $index->id]) . '" class="btn btn-xs btn-warning"><i class="fa fa-pencil"></i></a>
+                ';
+            }
+
+            if(Auth::user()->can('delete-jobTitle'))
+            {
+                $html .= '
+                    <button class="btn btn-xs btn-danger delete-jobTitle" data-toggle="modal" data-target="#delete-jobTitle" data-id="'.$index->id.'"><i class="fa fa-trash"></i></button>
+                ';
+            }
+
+            return $html;
+        });
+
+        $datatables->addColumn('check', function ($index) {
+            $html = '';
+            $html .= '
+                <input type="checkbox" class="check" value="' . $index->id . '" name="id[]" form="action">
+            ';
+            return $html;
+        });
+
+        $datatables = $datatables->make(true);
+        return $datatables;
+    }
 
 	public function create()
     {
@@ -53,8 +92,7 @@ class JobTitleController extends Controller
         
         $index->save();
 
-        Session::flash('success', 'Data Has Been Added');
-    	return redirect()->route('admin.jobTitle');
+    	return redirect()->route('admin.jobTitle')->with('success', 'Data berhasil ditambah');
     }
 
     public function edit($id)
@@ -82,16 +120,14 @@ class JobTitleController extends Controller
         
         $index->save();
 
-        Session::flash('success', 'Data Has Been Updated');
-    	return redirect()->route('admin.jobTitle');
+    	return redirect()->route('admin.jobTitle')->with('success', 'Data Berhasil diubah');
     }
 
     public function delete($id)
     {
     	JobTitle::destroy($id);
 
-        Session::flash('success', 'Data Has Been Deleted');
-    	return redirect()->route('admin.jobTitle');
+        return redirect()->back()->with('success', 'Data Berhasil dihapus');
     }
 
     public function action(Request $request)
@@ -99,39 +135,9 @@ class JobTitleController extends Controller
     	if($request->action == 'delete')
     	{
     		JobTitle::destroy($request->id);
-            Session::flash('success', 'Data Selected Has Been Deleted');
-    	}
-    	else if($request->action == 'enable')
-    	{
-    		$index = JobTitle::whereIn('id', $request->id)->update(['active' => 1]);
-            Session::flash('success', 'Data Selected Has Been Actived');
-    	}
-    	else if($request->action == 'disable')
-    	{
-    		$index = JobTitle::whereIn('id', $request->id)->update(['active' => 0]);
-            Session::flash('success', 'Data Selected Has Been Inactived');
+            return redirect()->back()->with('success', 'Data berhasil dihapus');
     	}
     	
-    	return redirect()->route('admin.jobTitle');
-    }
-
-    public function active($id, $action)
-    {
-        $index = JobTitle::find($id);
-
-        $index->active = $action;
-
-        $index->save();
-
-        if($action == 1)
-        {
-            Session::flash('success', 'Data Has Been Actived');
-        }
-        else
-        {
-            Session::flash('success', 'Data Has Been Inactived');
-        }
-
-        return redirect()->route('admin.jobTitle');
+    	return redirect()->back()->with('failed', 'Akses ditolak');
     }
 }

@@ -46,15 +46,13 @@
 
 	<h1>Data Karyawan - Family Hubungan - Buat</h1>
 	<div class="x_panel">
-		<form class="form-horizontal form-label-left" action="{{ route('admin.employeeFamily.store', ['id' => $employee->id]) }}" method="post" enctype="multipart/form-data">
-			<h2>Biodata Karyawan</h2>
-
+		<form class="form-horizontal form-label-left" action="{{ route('admin.employee.storeFamily', ['id' => $employee->id]) }}" method="post" enctype="multipart/form-data">
 			<div class="form-group">
 				<label for="relation" class="control-label col-md-3 col-sm-3 col-xs-12">Hubungan <span class="required">*</span>
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
 					<select id="relation" name="relation" class="form-control {{$errors->first('relation') != '' ? 'parsley-error' : ''}}">
-						<option value="">-- Select Hubungan --</option>
+						<option value="">-- Pilih Hubungan --</option>
 						<option value="ayah" @if(old('relation') != '' && old('relation') == 'ayah') selected @endif>Ayah</option>
 						<option value="ibu" @if(old('relation') != '' && old('relation') == 'ibu') selected @endif>Ibu</option>
 						<option value="saudara" @if(old('relation') != '' && old('relation') == 'saudara') selected @endif>Saudara</option>
@@ -102,7 +100,7 @@
 			</div>
 
 			<div class="form-group">
-				<label for="job" class="control-label col-md-3 col-sm-3 col-xs-12">Job
+				<label for="job" class="control-label col-md-3 col-sm-3 col-xs-12">Pekerjaan
 				</label>
 				<div class="col-md-9 col-sm-9 col-xs-12">
 					<input type="text" id="job" name="job" class="form-control {{$errors->first('job') != '' ? 'parsley-error' : ''}}" value="{{ old('job') }}">

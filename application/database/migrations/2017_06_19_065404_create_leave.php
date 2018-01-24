@@ -21,6 +21,7 @@ class CreateLeave extends Migration
             $table->time('end_time');
             $table->text('need');
             $table->text('note')->nullable();
+            $table->boolean('check_leader')->nullable()->comment('bila belum check ada leader, izin tidak dihitung');
             $table->timestamps();
         });
     }

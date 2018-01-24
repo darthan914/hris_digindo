@@ -7,6 +7,8 @@ use App\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Auth;
+use Datatables;
 use Session;
 use File;
 
@@ -19,13 +21,85 @@ class LeaveController extends Controller
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
 	{
-		$index = Leave::orderBy('id', 'DESC')
-        	->get();
-
-    	return view('backend.leave.index')->with(compact('index'));
+    	return view('backend.leave.index')->with(compact('request'));
 	}
+
+    public function datatables(Request $request)
+    {
+        $index = Leave::join('employee', 'leave.id_employee', 'employee.id')->select('leave.*', 'employee.name')->get();
+
+        $datatables = Datatables::of($index);
+
+        $datatables->addColumn('action', function ($index) {
+            $html = '';
+
+            if(Auth::user()->can('edit-leave'))
+            {
+                $html .= '
+                    <a href="' . route('admin.leave.edit', ['id' => $index->id]) . '" class="btn btn-xs btn-warning"><i class="fa fa-pencil"></i></a>
+                ';
+            }
+
+            if(Auth::user()->can('delete-leave'))
+            {
+                $html .= '
+                    <button class="btn btn-xs btn-danger delete-leave" data-toggle="modal" data-target="#delete-leave" data-id="'.$index->id.'"><i class="fa fa-trash"></i></button>
+                ';
+            }
+
+            if(Auth::user()->can('confirm-leave') && $index->check_leader == 0)
+            {
+                $html .= '
+                    <button class="btn btn-xs btn-success confirm-leave" data-toggle="modal" data-target="#confirm-leave" data-id="'.$index->id.'"><i class="fa fa-check"></i></button>
+                ';
+            }
+
+            if(Auth::user()->can('confirm-leave') && $index->check_leader == 1)
+            {
+                $html .= '
+                    <button class="btn btn-xs btn-warning cancel-leave" data-toggle="modal" data-target="#cancel-leave" data-id="'.$index->id.'"><i class="fa fa-times"></i></button>
+                ';
+            }
+
+            return $html;
+        });
+
+        $datatables->editColumn('check_leader', function ($index) {
+            $html = '';
+            if($index->check_leader)
+            {
+                $html .= '
+                    <span class="label label-info">Konfirmasi</span>
+                ';
+            }
+            else
+            {
+                $html .= '
+                    <span class="label label-default">Belum Konfirmasi</span>
+                ';
+            }
+            return $html;
+        });
+
+        $datatables->editColumn('date', function ($index) {
+            return date('d/m/Y', strtotime($index->date));
+        });
+
+        $datatables->addColumn('check', function ($index) {
+            $html = '';
+
+            $html .= '
+                <input type="checkbox" class="check" value="' . $index->id . '" name="id[]" form="action">
+            ';
+
+            return $html;
+        });
+
+        $datatables = $datatables->make(true);
+        return $datatables;
+    }
 
 	public function create()
     {
@@ -140,6 +214,25 @@ class LeaveController extends Controller
             Session::flash('success', 'Data Has Been Inactived');
         }
 
+        return redirect()->route('admin.leave');
+    }
+
+    public function confirm(Request $request)
+    {
+        $index = Leave::find($request->id);
+
+        if($index->check_leader)
+        {
+            $index->check_leader = 0;
+        }
+        else
+        {
+            $index->check_leader = 1;
+        }
+
+        $index->save();
+
+        Session::flash('success', 'Data berhasil diupdate');
         return redirect()->route('admin.leave');
     }
 }

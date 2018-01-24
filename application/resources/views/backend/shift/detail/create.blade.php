@@ -27,7 +27,7 @@
 
 	<h1>Shift {{ $shift->name }} - Buat</h1>
 	<div class="x_panel">
-		<form class="form-horizontal form-label-left" action="{{ route('admin.shiftDetail.store', ['id' => $shift->id]) }}" method="post" enctype="multipart/form-data">
+		<form class="form-horizontal form-label-left" action="{{ route('admin.shift.storeDetail', ['id' => $shift->id]) }}" method="post" enctype="multipart/form-data">
 
 			
 
@@ -96,7 +96,7 @@
 			<div class="form-group">
 				<div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
 					{{ csrf_field() }}
-					<a class="btn btn-primary" href="{{ route('admin.shift') }}">Batal</a>
+					<a class="btn btn-primary" href="{{ route('admin.shift.edit', [$shift->id]) }}">Batal</a>
 					<button type="submit" class="btn btn-success">Submit</button>
 				</div>
 			</div>

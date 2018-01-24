@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Session;
 use File;
+use Datatables;
 
 use App\Http\Controllers\Controller;
 
@@ -21,69 +22,77 @@ class ShiftController extends Controller
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
 	{
-		$index = Shift::all();
-
-		$detail = ShiftDetail::orderBy('id', 'ASC');
-
-    	return view('backend.shift.index')->with(compact('index', 'detail'));
+		
+    	return view('backend.shift.index')->with(compact('request'));
 	}
+
+    public function datatables(Request $request)
+    {
+        $index = Shift::all();
+
+        $datatables = Datatables::of($index);
+
+        $datatables->addColumn('action', function ($index) {
+            $html = '';
+            if (Auth::user()->can('view-shift'))
+            {
+                $html .= '
+                    <a href="' . route('admin.shift.edit', ['id' => $index->id]) . '" class="btn btn-xs btn-warning"><i class="fa fa-eye"></i></a>
+                ';
+            }
+            
+            if (Auth::user()->can('delete-shift'))
+            {
+                $html .= '
+                    <button class="btn btn-xs btn-danger delete-shift" data-toggle="modal" data-target="#delete-shift" data-id="'.$index->id.'"><i class="fa fa-trash"></i></button>
+                ';
+            }
+            return $html;
+        });
+
+        $datatables->addColumn('check', function ($index) {
+            $html = '';
+            $html .= '
+                <input type="checkbox" class="check" value="' . $index->id . '" name="id[]" form="action">
+            ';
+            return $html;
+        });
+
+        $datatables = $datatables->make(true);
+        return $datatables;
+    }
 
 	public function create()
     {
-
     	return view('backend.shift.create');
     }
 
 	public function store(Request $request)
     {
     	$this->validate($request, [
-            'code' => 'required|unique:shift,code',
-			'name' => 'required',
-			'shift_in' => 'required',
-			'shift_out' => 'required',
-			'late' => 'required|integer',
+            'code'          => 'required|unique:shift,code',
+			'name'          => 'required',
+            'day_per_month' => 'required|integer',
         ]);
 
     	$index = new Shift;
 
         $index->code            = $request->code;
 		$index->name            = $request->name;
-		$index->shift_in        = date('H:i:s', strtotime($request->shift_in));
-		$index->shift_out       = date('H:i:s', strtotime($request->shift_out));
 		$index->work_in_holiday = isset($request->work_in_holiday) ? 1 : 0;
-		$index->late            = $request->late;
+        $index->day_per_month   = $request->day_per_month;
 
         $index->save();
 
-        $count = 0;
-        $detail = [];
-        if (isset($request->day)) {
-            foreach ($request->day as $key) {
-                $array = [
-                    'id_shift'  => $index->id,
-                    'day'       => $request->day[$count],
-                    'shift_in'  => date('H:i:s', strtotime($request->shift_in)),
-                    'shift_out' => date('H:i:s', strtotime($request->shift_out)),
-                ];
-                $count++;
-                array_push($detail, $array);
-            }
-        }
-
-        $shiftDetail = ShiftDetail::insert($detail);
-        
-
-        Session::flash('success', 'Data Has Been Added');
-    	return redirect()->route('admin.shift');
+        Session::flash('success', 'Data Berhasil ditambah');
+    	return redirect()->route('admin.shift.edit', $index->id);
     }
 
     public function edit($id)
     {
         $index = Shift::find($id);
-        $detail = ShiftDetail::where('id_shift', $id)->orderBy('day', 'ASC')->get();
-        $hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
         return view('backend.shift.edit')->with(compact('index', 'detail', 'hari'));
     }
@@ -91,31 +100,27 @@ class ShiftController extends Controller
     public function update($id, Request $request)
     {
     	$this->validate($request, [
-            'code'      => 'required|unique:shift,code,'.$id,
-			'name'      => 'required',
-			'shift_in'  => 'required',
-			'shift_out' => 'required',
-			'late'      => 'required|integer',
+            'code'          => 'required|unique:shift,code,'.$id,
+			'name'          => 'required',
+            'day_per_month' => 'required|integer',
         ]);
 
     	$index = Shift::find($id);
 
         $index->code            = $request->code;
 		$index->name            = $request->name;
-		$index->shift_in        = date('H:i:s', strtotime($request->shift_in));
-		$index->shift_out       = date('H:i:s', strtotime($request->shift_out));
 		$index->work_in_holiday = isset($request->work_in_holiday) ? 1 : 0;
-		$index->late            = $request->late;
+        $index->day_per_month   = $request->day_per_month;
 
         $index->save();
 
-        Session::flash('success', 'Data Has Been Updated');
-    	return redirect()->route('admin.shift');
+        Session::flash('success', 'Data Berhasil diupdate');
+    	return redirect()->back();
     }
 
-    public function delete($id)
+    public function delete(Request $request)
     {
-    	Shift::destroy($id);
+    	Shift::destroy($request->id);
 
         Session::flash('success', 'Data Has Been Deleted');
     	return redirect()->route('admin.shift');
@@ -128,44 +133,54 @@ class ShiftController extends Controller
     		Shift::destroy($request->id);
             Session::flash('success', 'Data Selected Has Been Deleted');
     	}
-    	else if($request->action == 'enable')
-    	{
-    		$index = Shift::whereIn('id', $request->id)->update(['active' => 1]);
-            Session::flash('success', 'Data Selected Has Been Actived');
-    	}
-    	else if($request->action == 'disable')
-    	{
-    		$index = Shift::whereIn('id', $request->id)->update(['active' => 0]);
-            Session::flash('success', 'Data Selected Has Been Inactived');
-    	}
     	
     	return redirect()->route('admin.shift');
     }
 
-    public function active($id, $action)
+    public function datatablesDetail($id)
     {
-        $index = Shift::find($id);
+        $index = ShiftDetail::where('id_shift', $id)->get();
 
-        $index->active = $action;
+        $datatables = Datatables::of($index);
 
-        $index->save();
+        $datatables->addColumn('action', function ($index) {
+            $html = '';
+            if (Auth::user()->can('edit-shift'))
+            {
+                $html .= '
+                    <a href="' . route('admin.shift.editDetail', ['id' => $index->id]) . '" class="btn btn-xs btn-warning"><i class="fa fa-pencil"></i></a>
+                ';
+            }
+            
+            if (Auth::user()->can('edit-shift'))
+            {
+                $html .= '
+                    <button class="btn btn-xs btn-danger delete-shiftDetail" data-toggle="modal" data-target="#delete-shiftDetail" data-id="'.$index->id.'"><i class="fa fa-trash"></i></button>
+                ';
+            }
+            return $html;
+        });
 
-        if($action == 1)
-        {
-            Session::flash('success', 'Data Has Been Actived');
-        }
-        else
-        {
-            Session::flash('success', 'Data Has Been Inactived');
-        }
+        $datatables->addColumn('check', function ($index) {
+            $html = '';
+            $html .= '
+                <input type="checkbox" class="check" value="' . $index->id . '" name="id[]" form="action">
+            ';
+            return $html;
+        });
 
-        return redirect()->route('admin.shift');
+        $datatables->editColumn('day', function ($index) {
+            $day = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            return $day[$index->day];
+        });
+
+        $datatables = $datatables->make(true);
+        return $datatables;
     }
 
     public function createDetail($id)
     {
         $shift = Shift::find($id);
-
         return view('backend.shift.detail.create')->with(compact('shift'));
     }
 
@@ -186,7 +201,7 @@ class ShiftController extends Controller
 
         $index->save();
 
-        Session::flash('success', 'Data Has Been Added');
+        Session::flash('success', 'Data Berhasil ditambah');
         return redirect()->route('admin.shift.edit', ['id' => $id]);
     }
 
@@ -214,13 +229,13 @@ class ShiftController extends Controller
 
         $index->save();
 
-        Session::flash('success', 'Data Has Been Updated');
+        Session::flash('success', 'Data Berhasil diupdate');
         return redirect()->route('admin.shift.edit', ['id' => $index->id_shift]);
     }
 
-    public function deleteDetail($id)
+    public function deleteDetail(Request $request)
     {
-        ShiftDetail::destroy($id);
+        ShiftDetail::destroy($request->id);
 
         Session::flash('success', 'Data Has Been Deleted');
         return redirect::back();
