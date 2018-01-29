@@ -81,7 +81,9 @@
 		) AS `least_overtime`,
 		(
 			CASE 
-				WHEN `absence_employee_detail`.`shift_in` IS NULL AND `absence_employee_detail`.`shift_out` IS NULL AND `absence_employee_detail`.`check_in` IS NOT NULL AND `absence_employee_detail`.`check_out` IS NOT NULL AND  @overtime >= `employee`.`min_overtime`
+				WHEN `absence_employee_detail`.`shift_in` IS NULL AND `absence_employee_detail`.`shift_out` IS NULL AND `absence_employee_detail`.`check_in` IS NOT NULL AND `absence_employee_detail`.`check_out` IS NOT NULL
+				THEN (FLOOR(TIMESTAMPDIFF(MINUTE,`absence_employee_detail`.`check_in`,`absence_employee_detail`.`check_out`) / `absence_employee`.`uang_lembur_permenit`) / 4)
+				WHEN `absence_employee_detail`.`shift_in` IS NOT NULL AND `absence_employee_detail`.`shift_out` IS NOT NULL AND `absence_employee_detail`.`check_in` IS NOT NULL AND `absence_employee_detail`.`check_out` IS NOT NULL AND `holiday`.`type` IS NOT NULL
 				THEN (FLOOR(TIMESTAMPDIFF(MINUTE,`absence_employee_detail`.`check_in`,`absence_employee_detail`.`check_out`) / `absence_employee`.`uang_lembur_permenit`) / 4)
 				WHEN @least_overtime IS NOT NULL AND  @overtime >= `employee`.`min_overtime`
 				THEN (FLOOR(TIMESTAMPDIFF(MINUTE,CONCAT(`absence_employee_detail`.`date`,' ',`absence_employee_detail`.`shift_out`), @least_overtime) / `absence_employee`.`uang_lembur_permenit`) / 4)
