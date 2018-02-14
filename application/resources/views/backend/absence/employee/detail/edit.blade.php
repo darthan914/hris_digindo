@@ -139,7 +139,7 @@
 			<div class="form-group">
 				<div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
 					{{ csrf_field() }}
-					<a class="btn btn-primary" href="{{ route('admin.absence.editEmployee', [$index->id]) }}">Batal</a>
+					<a class="btn btn-primary" href="{{ route('admin.absence.editEmployee', [$index->id_absence_employee]) }}">Batal</a>
 					<button type="submit" class="btn btn-success">Submit</button>
 				</div>
 			</div>

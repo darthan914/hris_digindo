@@ -202,12 +202,9 @@ class AbsenceController extends Controller
 
                             $format_date_php = $format_year . '-' . $format_month . '-' . $format_date;
 
-                            $check_in  = $list2['scan_masuk'];
-                            $check_out = $list2['scan_pulang'];
-
                             $inserted_date[] = $format_date_php;
 
-                            if ($list->id_machine == $list2['no._id']) {
+                            if ($list->id_absence_machine == $list2['no._id']) {
                                 $insert2[] = [
                                     'id_absence_employee' => $list->id,
                                     'date'                => $format_date_php,
@@ -217,24 +214,21 @@ class AbsenceController extends Controller
                                     'check_out'           => $list2['scan_pulang'] != '' ? $list2['scan_pulang'] : null,
                                     'status'              => 'blank',
                                 ];
+
+                                
                             }
                         }
 
-                        foreach ($date as $list2) {
-                            if(!in_array($list2, $inserted_date))
-                            {
-                                $attendance = $this->attendanceData($grab, $list2);
-                                
-                                $insert2[] = [
-                                    'id_absence_employee' => $list->id,
-                                    'date'                => $list2,
-                                    'shift_in'            => null,
-                                    'shift_out'           => null,
-                                    'check_in'            => null,
-                                    'check_out'           => null,
-                                    'status'              => 'blank',
-                                ];
-                            }
+                        foreach ($inserted_date as $list2) {
+                            $insert2[] = [
+                                'id_absence_employee' => $list->id,
+                                'date'                => $list2,
+                                'shift_in'            => null,
+                                'shift_out'           => null,
+                                'check_in'            => null,
+                                'check_out'           => null,
+                                'status'              => 'blank',
+                            ];
                         }
                     }
 

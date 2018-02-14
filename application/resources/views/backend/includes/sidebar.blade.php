@@ -49,7 +49,7 @@
 							@endcan
 
 							@can('list-dayoff')
-							<li ><a href="{{ route('admin.dayoff') }}">Cuti</a></li>
+							<li ><a href="{{ route('admin.dayoff') }}">Izin/Cuti/Sakit</a></li>
 							@endcan
 
 							@can('list-overtime')
