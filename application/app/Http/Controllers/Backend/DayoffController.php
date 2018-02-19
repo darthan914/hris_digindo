@@ -316,7 +316,7 @@ class DayoffController extends Controller
                 $validator->errors()->add('dayoff', 'Cuti Setengah hari untuk 1 hari');
             }
 
-            if($total_dayoff == 0) {
+            if($total_dayoff == 0 && $request->type == 'cuti') {
                 $validator->errors()->add('dayoff', 'Cuti tidak tersedia');
             }
 
