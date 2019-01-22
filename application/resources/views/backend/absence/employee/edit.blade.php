@@ -484,9 +484,15 @@
 						</tr>
 						<tr>
 							<th>Bonus Lembur</th>
-							<td align="right" nowrap>{{ number_format($index->uang_lembur) }} x {{ number_format($index->point_overtime) }}</td>
+							<td align="right" nowrap>{{ number_format($index->uang_lembur) }} x {{ number_format($index->point_overtime, 2) }}</td>
 							<td align="right">{{ number_format($index->uang_lembur * $index->point_overtime) }}</td>
 							@php $payroll += ($index->uang_lembur * $index->point_overtime)  @endphp
+						</tr>
+						<tr>
+							<th>Tunjangan</th>
+							<td align="right" nowrap>({{ number_format($index->tunjangan) }} + {{ number_format($index->perawatan_motor) }} + {{ number_format($index->transport) }}) x ({{ number_format($tunjangan_akumulatif) }}  / {{ number_format($index->day_per_month) }})</td>
+							<td align="right">{{ number_format(($index->tunjangan + $index->perawatan_motor + $index->transport) * ( $tunjangan_akumulatif / $index->day_per_month )) }}</td>
+							@php $payroll += (($index->tunjangan + $index->perawatan_motor + $index->transport) * ($tunjangan_akumulatif / $index->day_per_month))  @endphp
 						</tr>
 						<tr>
 							<th>Gaji yang didapat</th>

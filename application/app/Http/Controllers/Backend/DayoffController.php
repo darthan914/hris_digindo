@@ -320,9 +320,9 @@ class DayoffController extends Controller
                 $validator->errors()->add('dayoff', 'Cuti tidak tersedia');
             }
 
-            // if($total_dayoff > 4) {
-            //     $validator->errors()->add('dayoff', 'Maksimal cuti 4 hari');
-            // }
+            if($total_dayoff > 4) {
+                $validator->errors()->add('dayoff', 'Maksimal cuti 4 hari');
+            }
 
             // if(($totalHolidayDayoff + $totalEmployeeDayoff + $total_dayoff) >= $count_dayoff)
             // {

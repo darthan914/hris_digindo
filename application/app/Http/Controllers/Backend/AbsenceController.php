@@ -323,7 +323,7 @@ class AbsenceController extends Controller
                             ELSE @late := 0 
                         END
                     ) AS `minute_late`,
-                    COALESCE(TIMESTAMPDIFF(MINUTE, `absence_employee_detail`.`shift_out`,`absence_employee_detail`.`check_out`), 0) AS `minute_overtime`,
+                    @overtime := COALESCE(TIMESTAMPDIFF(MINUTE, `absence_employee_detail`.`shift_out`,`absence_employee_detail`.`check_out`), 0) AS `minute_overtime`,
                     (
                         CASE 
                             WHEN `absence_employee_detail`.`check_in` IS NOT NULL OR `absence_employee_detail`.`check_out` IS NOT NULL 
@@ -580,7 +580,7 @@ class AbsenceController extends Controller
                             ELSE @late := 0 
                         END
                     ) AS `minute_late`,
-                    COALESCE(TIMESTAMPDIFF(MINUTE, `absence_employee_detail`.`shift_out`,`absence_employee_detail`.`check_out`), 0) AS `minute_overtime`,
+                    @overtime := COALESCE(TIMESTAMPDIFF(MINUTE, `absence_employee_detail`.`shift_out`,`absence_employee_detail`.`check_out`), 0) AS `minute_overtime`,
                     (
                         CASE 
                             WHEN `absence_employee_detail`.`check_in` IS NOT NULL OR `absence_employee_detail`.`check_out` IS NOT NULL 
@@ -645,10 +645,13 @@ class AbsenceController extends Controller
                         CASE 
                             WHEN `absence_employee_detail`.`shift_in` IS NULL AND `absence_employee_detail`.`shift_out` IS NULL AND `absence_employee_detail`.`check_in` IS NOT NULL AND `absence_employee_detail`.`check_out` IS NOT NULL AND  @overtime >= `employee`.`min_overtime`
                             THEN (FLOOR(TIMESTAMPDIFF(MINUTE,`absence_employee_detail`.`check_in`,`absence_employee_detail`.`check_out`) / `absence_employee`.`uang_lembur_permenit`) / 4)
+
                             WHEN `absence_employee_detail`.`shift_in` IS NOT NULL AND `absence_employee_detail`.`shift_out` IS NOT NULL AND `absence_employee_detail`.`check_in` IS NOT NULL AND `absence_employee_detail`.`check_out` IS NOT NULL AND `holiday`.`type` IS NOT NULL
                             THEN (FLOOR(TIMESTAMPDIFF(MINUTE,`absence_employee_detail`.`check_in`,`absence_employee_detail`.`check_out`) / `absence_employee`.`uang_lembur_permenit`) / 4)
+
                             WHEN @least_overtime IS NOT NULL AND  @overtime >= `employee`.`min_overtime`
                             THEN (FLOOR(TIMESTAMPDIFF(MINUTE,CONCAT(`absence_employee_detail`.`date`,\' \',`absence_employee_detail`.`shift_out`), @least_overtime) / `absence_employee`.`uang_lembur_permenit`) / 4)
+
                             ELSE 0
                         END
                     ) AS `point_overtime`
@@ -673,6 +676,11 @@ class AbsenceController extends Controller
             ->select(
                 'absence_employee.*',
                 'employee.name',
+                'employee.date_join',
+                'employee.date_resign',
+                DB::raw('MIN(absence_point.date) AS start_date'),
+                DB::raw('MAX(absence_point.date) AS end_date'),
+                DB::raw('SUM(absence_point.minute_late) AS minute_late'),
                 DB::raw('SUM(absence_point.minute_late) AS minute_late'),
                 DB::raw('SUM(absence_point.minute_overtime) AS minute_overtime'),
                 DB::raw('SUM(absence_point.point_lunch) AS point_lunch'),
@@ -687,7 +695,75 @@ class AbsenceController extends Controller
 
         $employee = Employee::all();
 
-        return view('backend.absence.employee.edit')->with(compact('index', 'employee'));
+        // For first join
+        $start_date = $index->date_join;
+        $end_date = $index->end_date;
+
+        $sub_join = 0;
+
+        if($index->start_date <= $index->date_join && $index->date_join <= $index->end_date)
+        {
+            while(1)
+            {
+                // if(Holiday::whereDate('date', date('Y-m-d', strtotime($start_date)))->count() == 0)
+                {
+
+                    if(Employee::join('shift', 'shift.id', 'employee.id_shift')->join('shift_detail', 'shift.id', 'shift_detail.id_shift')->where('employee.id', $index->id_employee)->where('shift_detail.day', date('w', strtotime($end_date)))->count() > 0)
+                    {
+                        $sub_join++;
+                    }
+                        
+                }
+                
+
+                if($start_date >= $end_date)
+                {
+                    break;
+                }
+                else
+                {
+                    $start_date = date('d F Y', strtotime($end_date . ' +1 day'));
+                }
+                
+            }
+        }
+
+        // For resign
+        $start_date = $index->start_date;
+        $end_date = $index->date_resign;
+
+        $sub_resign = 0;
+
+        if($index->start_date <= $index->date_resign && $index->date_resign <= $index->end_date)
+        {
+            while(1)
+            {
+                // if(Holiday::whereDate('date', date('Y-m-d', strtotime($start_date)))->count() == 0)
+                {
+
+                    if(Employee::join('shift', 'shift.id', 'employee.id_shift')->join('shift_detail', 'shift.id', 'shift_detail.id_shift')->where('employee.id', $index->id_employee)->where('shift_detail.day', date('w', strtotime($end_date)))->count() > 0)
+                    {
+                        $sub_resign++;
+                    }
+                        
+                }
+                
+
+                if($start_date >= $end_date)
+                {
+                    break;
+                }
+                else
+                {
+                    $start_date = date('d F Y', strtotime($end_date . ' +1 day'));
+                }
+                
+            }
+        }
+
+        $tunjangan_akumulatif = max($index->day_per_month - $sub_join - $sub_resign, 0);
+
+        return view('backend.absence.employee.edit')->with(compact('index', 'employee', 'tunjangan_akumulatif'));
     }
 
     public function updateEmployee($id, Request $request)
@@ -780,7 +856,7 @@ class AbsenceController extends Controller
                             ELSE @late := 0 
                         END
                     ) AS `minute_late`,
-                    COALESCE(TIMESTAMPDIFF(MINUTE, `absence_employee_detail`.`shift_out`,`absence_employee_detail`.`check_out`), 0) AS `minute_overtime`,
+                    @overtime := COALESCE(TIMESTAMPDIFF(MINUTE, `absence_employee_detail`.`shift_out`,`absence_employee_detail`.`check_out`), 0) AS `minute_overtime`,
                     (
                         CASE 
                             WHEN `absence_employee_detail`.`check_in` IS NOT NULL OR `absence_employee_detail`.`check_out` IS NOT NULL 

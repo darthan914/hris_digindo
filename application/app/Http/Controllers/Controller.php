@@ -66,4 +66,18 @@ class Controller extends BaseController
             return false;
         }
     }
+
+    public function levelgrant($id_user)
+    {
+        $user = User::find($id_user);
+
+        if($user->level <= Auth::user()->level)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 }
